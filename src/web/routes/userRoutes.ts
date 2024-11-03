@@ -6,4 +6,9 @@ export async function userRoutes(app: FastifyInstance) {
   // GET /users/{userId}: Obter informações de um usuário específico.
   // PUT /users/{userId}: Atualizar informações de um usuário.
   // DELETE /users/{userId}: Deletar um usuário (com as devidas precauções e verificações).
+
+  app.post('/users', async () => {
+    // Cria um novo usuário
+    return { message: 'User created' };
+  });
 }
