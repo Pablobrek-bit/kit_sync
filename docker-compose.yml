@@ -1,13 +1,29 @@
 version: '3.7'
 
 services:
-  postgresql:
-    image: bitnami/postgresql
+  site_kit_sync:
+    container_name: site_kit_sync
+    build:
+      context: .
+      dockerfile: Dockerfile.dev
     ports:
-      - '5432:5432'
+      - '3000:3000'
     environment:
-      - POSTGRESQL_USERNAME=docker_username
-      - POSTGRESQL_PASSWORD=docker_password
-      - POSTGRESQL_DATABASE=docker_database
+      - DATABASE_URL=postgres://${DB_USER}:${DB_PASSWORD}@${DB_HOST}:${DB_PORT}/${DB_NAME}
+    depends_on:
+      - site_kit_sync_db
+    links:
+      - site_kit_sync_db
     volumes:
-      - ./data:/bitnami/postgresql
+      - .:/usr/app
+
+  # PostgreSQL service
+  site_kit_sync_db:
+    container_name: site_kit_sync_db
+    image: postgres:13
+    environment:
+      POSTGRES_USER: ${DB_USER}
+      POSTGRES_PASSWORD: ${DB_PASSWORD}
+      POSTGRES_DB: ${DB_NAME}
+    ports:
+      - '5433:5432'
