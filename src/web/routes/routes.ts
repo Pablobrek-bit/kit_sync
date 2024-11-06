@@ -1,4 +1,4 @@
-import type { FastifyInstance } from 'fastify';
+import { FastifyInstance } from 'fastify';
 import { userRoutes } from './userRoutes';
 
 export async function routes(app: FastifyInstance) {

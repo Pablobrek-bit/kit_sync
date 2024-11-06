@@ -1,4 +1,5 @@
-import type { FastifyInstance } from 'fastify';
+import { FastifyInstance } from 'fastify';
+import { UserController } from 'web/controllers/UserController';
 
 export async function userRoutes(app: FastifyInstance) {
   // routes:
@@ -7,8 +8,7 @@ export async function userRoutes(app: FastifyInstance) {
   // PUT /users/{userId}: Atualizar informações de um usuário.
   // DELETE /users/{userId}: Deletar um usuário (com as devidas precauções e verificações).
 
-  app.post('/users', async () => {
-    // Cria um novo usuário
-    return { message: 'User created' };
-  });
+  const userController = new UserController();
+
+  app.post('/', userController.create);
 }
