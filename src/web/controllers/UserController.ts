@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UserPrismaRespository } from 'repository/prisma/UserPrismaRepository';
 import { CreateUserService } from 'services/user/CreateUserService';
+import { GetUserService } from 'services/user/GetUserService';
 import { z } from 'zod';
 
 export class UserController {
@@ -23,5 +24,20 @@ export class UserController {
     const { user } = await createUserService.execute(data);
 
     return reply.code(201).send({ user });
+  }
+
+  async get(request: FastifyRequest, reply: FastifyReply) {
+    const pathSchema = z.object({
+      id: z.string({ message: 'Id is required' }),
+    });
+
+    const { id } = pathSchema.parse(request.params);
+
+    const userRepository = new UserPrismaRespository();
+    const getUserService = new GetUserService(userRepository);
+
+    const { user } = await getUserService.execute({ id });
+
+    return reply.code(200).send(user);
   }
 }
