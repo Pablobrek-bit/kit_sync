@@ -28,11 +28,7 @@ export class UserController {
   }
 
   async get(request: FastifyRequest, reply: FastifyReply) {
-    const pathSchema = z.object({
-      id: z.string({ message: 'Id is required' }),
-    });
-
-    const { id } = pathSchema.parse(request.params);
+    const id = request.user.sub;
 
     const userRepository = new UserPrismaRespository();
     const getUserService = new GetUserService(userRepository);
