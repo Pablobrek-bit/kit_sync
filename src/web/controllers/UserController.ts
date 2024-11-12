@@ -3,6 +3,7 @@ import { UserPrismaRespository } from 'repository/prisma/UserPrismaRepository';
 import { AuthService } from 'services/user/AuthService';
 import { CreateUserService } from 'services/user/CreateUserService';
 import { GetUserService } from 'services/user/GetUserService';
+import { UpdateUserService } from 'services/user/UpdateUserService';
 import { z } from 'zod';
 
 export class UserController {
@@ -66,5 +67,27 @@ export class UserController {
     );
 
     return reply.code(200).send({ user, token });
+  }
+
+  async update(request: FastifyRequest, reply: FastifyReply) {
+    const id = request.user.sub;
+
+    const requestSchema = z.object({
+      name: z.string().optional(),
+      email: z.string().email({ message: 'Invalid Email' }).optional(),
+      password: z
+        .string()
+        .min(6, { message: 'Password must have at least 6 characters' })
+        .optional(),
+    });
+
+    const data = requestSchema.parse(request.body);
+
+    const userRepository = new UserPrismaRespository();
+    const updateUserService = new UpdateUserService(userRepository);
+
+    const updatedUser = await updateUserService.execute({ id, ...data });
+
+    return reply.code(200).send(updatedUser);
   }
 }

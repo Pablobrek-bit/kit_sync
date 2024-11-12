@@ -1,5 +1,5 @@
 import { FastifyInstance } from 'fastify';
-import { ensureAuthenticated } from 'middleware/EnsureAuthenticated';
+import { ensureAuthenticated } from 'middleware/ensureAuthenticated';
 import { UserController } from 'web/controllers/UserController';
 
 export async function userRoutes(app: FastifyInstance) {
@@ -7,4 +7,5 @@ export async function userRoutes(app: FastifyInstance) {
 
   app.post('/', userController.create);
   app.get('/', { preHandler: ensureAuthenticated }, userController.get);
+  app.put('/', { preHandler: ensureAuthenticated }, userController.update);
 }
