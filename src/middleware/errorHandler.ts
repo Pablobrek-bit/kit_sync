@@ -39,6 +39,11 @@ export const errorHandler = (
     rep.status(401).send({ message: 'Authorization header is missing' });
   }
 
+  if (error.code === 'FST_JWT_AUTHORIZATION_TOKEN_EXPIRED') {
+    console.error(error);
+    rep.status(401).send({ message: 'Authorization header is expired' });
+  }
+
   if (error instanceof Prisma.PrismaClientKnownRequestError) {
     console.error(error);
     rep.status(400).send({ message: error.message });
