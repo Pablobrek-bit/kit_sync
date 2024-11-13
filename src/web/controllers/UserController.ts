@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { UserPrismaRespository } from 'repository/prisma/UserPrismaRepository';
 import { AuthService } from 'services/user/AuthService';
 import { CreateUserService } from 'services/user/CreateUserService';
+import { DeleteUserService } from 'services/user/DeleteUserService';
 import { GetUserService } from 'services/user/GetUserService';
 import { UpdateUserService } from 'services/user/UpdateUserService';
 import { z } from 'zod';
@@ -89,5 +90,22 @@ export class UserController {
     const updatedUser = await updateUserService.execute({ id, ...data });
 
     return reply.code(200).send(updatedUser);
+  }
+
+  async delete(request: FastifyRequest, reply: FastifyReply) {
+    const paramsSchema = z.object({
+      userId: z.string(),
+    });
+
+    const { userId } = paramsSchema.parse(request.params);
+
+    const id = request.user.sub;
+
+    const userRepository = new UserPrismaRespository();
+    const deleteUserService = new DeleteUserService(userRepository);
+
+    await deleteUserService.execute({ id, userId });
+
+    return reply.code(204).send();
   }
 }

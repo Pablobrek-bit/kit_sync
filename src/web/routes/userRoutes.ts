@@ -8,4 +8,5 @@ export async function userRoutes(app: FastifyInstance) {
   app.post('/', userController.create);
   app.get('/', { preHandler: ensureAuthenticated }, userController.get);
   app.put('/', { preHandler: ensureAuthenticated }, userController.update);
+  app.put('/:id', { preHandler: ensureAuthenticated }, userController.delete);
 }

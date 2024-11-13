@@ -8,4 +8,6 @@ export interface UserRepository {
   findById(id: string): Promise<User | null>;
 
   update(data: Prisma.UserUpdateInput): Promise<User>;
+
+  delete(id: string): Promise<void>;
 }
