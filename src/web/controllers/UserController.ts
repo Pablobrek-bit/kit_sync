@@ -4,6 +4,7 @@ import { AuthService } from 'services/user/AuthService';
 import { CreateUserService } from 'services/user/CreateUserService';
 import { DeleteUserService } from 'services/user/DeleteUserService';
 import { GetUserService } from 'services/user/GetUserService';
+import { IndexUserService } from 'services/user/IndexUserService';
 import { UpdateUserService } from 'services/user/UpdateUserService';
 import { z } from 'zod';
 
@@ -107,5 +108,31 @@ export class UserController {
     await deleteUserService.execute({ id, userId });
 
     return reply.code(204).send();
+  }
+
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    const requestSchema = z
+      .object({
+        name: z.string().optional(),
+        createdAt: z.string().optional(),
+        updatedAt: z.string().optional(),
+        sort: z
+          .enum(['name', 'createdAt', 'updatedAt'])
+          .optional()
+          .default('updatedAt'),
+        order: z.enum(['asc', 'desc']).optional().default('desc'),
+        page: z.number().int().positive().optional().default(1),
+        size: z.number().int().positive().optional().default(10),
+      })
+      .strict();
+
+    const data = requestSchema.parse(request.query);
+
+    const userRepository = new UserPrismaRespository();
+    const indexUserService = new IndexUserService(userRepository);
+
+    const { users } = await indexUserService.execute({ ...data });
+
+    return reply.code(200).send(users);
   }
 }

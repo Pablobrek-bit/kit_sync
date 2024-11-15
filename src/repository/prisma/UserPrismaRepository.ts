@@ -41,4 +41,46 @@ export class UserPrismaRespository implements UserRepository {
       where: { id },
     });
   }
+
+  async index(data: {
+    name?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    sort: 'name' | 'createdAt' | 'updatedAt';
+    order: 'asc' | 'desc';
+    page: number;
+    size: number;
+  }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (data.name) {
+      where.name = {
+        contains: data.name,
+      };
+    }
+
+    if (data.createdAt) {
+      where.createdAt = {
+        contains: data.createdAt,
+      };
+    }
+
+    if (data.updatedAt) {
+      where.updatedAt = {
+        contains: data.updatedAt,
+      };
+    }
+
+    const users = await prisma.user.findMany({
+      where,
+      orderBy: {
+        [data.sort]: data.order,
+      },
+      skip: (data.page - 1) * data.size,
+      take: data.size,
+    });
+
+    return users;
+  }
 }
