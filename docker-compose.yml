@@ -27,3 +27,13 @@ services:
       POSTGRES_DB: ${DB_NAME}
     ports:
       - '5433:5432'
+
+  site_kit_sync_test:
+    container_name: site_kit_sync_test_db
+    image: postgres:13
+    environment:
+      POSTGRES_USER: test_user
+      POSTGRES_PASSWORD: test_password
+      POSTGRES_DB: site_kit_sync_test_db
+    ports:
+      - '5434:5432'
