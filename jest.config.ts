@@ -1,11 +1,12 @@
-// eslint-disable-next-line no-undef
-module.exports = {
+import type { Config } from 'jest';
+
+const config: Config = {
   clearMocks: true,
   coverageProvider: 'v8',
   preset: 'ts-jest',
   testEnvironment: 'node',
-  testMatch: ['**/*.spec.ts'],
-  basePath: 'src',
+  testMatch: ['<rootDir>/src/**/*.spec.ts'],
+  modulePaths: ['<rootDir>/src'],
   moduleNameMapper: {
     '^middleware/(.*)$': '<rootDir>/src/middleware/$1',
     '^@App/(.*)$': '<rootDir>/src/$1',
@@ -13,3 +14,5 @@ module.exports = {
   },
   moduleFileExtensions: ['js', 'jsx', 'ts', 'tsx', 'json', 'node'],
 };
+
+export default config;
