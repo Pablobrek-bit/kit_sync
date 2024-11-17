@@ -11,7 +11,9 @@
     "baseUrl": "./",
     "paths": {
       "*": ["src/*"],
-      "middleware/*": ["src/middleware/*"]
+      "lib*": ["src/lib*"],
+      "middleware/*": ["src/middleware/*"],
+      "env": ["./src/env"]
     }
   },
   "include": ["src/**/*", "src/tests"],

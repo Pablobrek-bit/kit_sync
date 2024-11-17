@@ -1,7 +1,7 @@
 import { FastifyInstance } from 'fastify';
-import { ensureAuthenticated } from 'middleware/ensureAuthenticated';
-import { verifyAdmin } from 'middleware/verifyAdmin';
-import { UserController } from 'web/controllers/UserController';
+import { ensureAuthenticated } from '../../middleware/ensureAuthenticated';
+import { verifyAdmin } from '../../middleware/verifyAdmin';
+import { UserController } from '../../web/controllers/UserController';
 
 export async function userRoutes(app: FastifyInstance) {
   const userController = new UserController();

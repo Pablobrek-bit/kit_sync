@@ -1,0 +1,124 @@
+// This is your Prisma schema file,
+// learn more about it in the docs: https://pris.ly/d/prisma-schema
+
+// Looking for ways to speed up your queries, or scale easily with your serverless or edge functions?
+// Try Prisma Accelerate: https://pris.ly/cli/accelerate-init
+
+generator client {
+    provider = "prisma-client-js"
+}
+
+datasource db {
+    provider = "postgresql"
+    url      = env("DATABASE_URL_TEST")
+}
+
+model User {
+    id              String      @id @default(uuid())
+    name            String
+    email           String      @unique
+    password        String
+    createdAt       DateTime    @default(now()) @map("created_at")
+    updatedAt       DateTime    @default(now()) @updatedAt @map("updated_at")
+    role            Role        @default(USER)
+    equipment       Equipment[]
+    rental          Rental[]
+    review          Review[]
+    messageSender   Message[]   @relation("sender")
+    messageReceiver Message[]   @relation("receiver")
+
+    @@index([email], name: "users_email_index")
+    @@map("users")
+}
+
+model Equipment {
+    id          String   @id @default(uuid())
+    name        String
+    description String
+    category    String
+    dailyPrice  Float    @map("diary_price")
+    available   Boolean  @default(true)
+    photos      String[]
+    createdAt   DateTime @default(now()) @map("created_at")
+    updatedAt   DateTime @default(now()) @updatedAt @map("updated_at")
+
+    propertyId String @map("property_id")
+    property   User   @relation(fields: [propertyId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+
+    rental Rental[]
+    review Review[]
+
+    @@map("equipments")
+}
+
+model Rental {
+    id        String       @id @default(uuid())
+    status    RentalStatus
+    total     Float
+    endAt     DateTime     @map("end_at")
+    startAt   DateTime     @map("start_at")
+    createdAt DateTime     @default(now()) @map("created_at")
+    updatedAt DateTime     @default(now()) @updatedAt @map("updated_at")
+    deleteAt  DateTime?    @map("delete_at")
+
+    equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    equipmentId String    @map("equipment_id")
+
+    renter   User      @relation(fields: [renterId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    renterId String    @map("renter_id")
+    review   Review[]
+    message  Message[]
+
+    @@map("rentals")
+}
+
+model Review {
+    id        String    @id @default(uuid())
+    rating    Int
+    comment   String?
+    createdAt DateTime  @default(now()) @map("created_at")
+    updatedAt DateTime  @default(now()) @updatedAt @map("updated_at")
+    deleteAt  DateTime? @map("delete_at")
+
+    reviewer   User   @relation(fields: [reviewerId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    reviewerId String @map("reviewer_id")
+
+    equipment   Equipment @relation(fields: [equipmentId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    equipmentId String    @map("equipment_id")
+
+    rental   Rental @relation(fields: [rentalId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    rentalId String @map("rental_id")
+
+    @@index([equipmentId], name: "reviews_equipment_id_index")
+    @@map("reviews")
+}
+
+model Message {
+    id        String   @id @default(uuid())
+    text      String
+    createdAt DateTime @default(now()) @map("created_at")
+
+    sender   User   @relation(fields: [senderId], references: [id], onDelete: Cascade, onUpdate: NoAction, name: "sender")
+    senderId String @map("sender_id")
+
+    receiver   User   @relation(fields: [receiverId], references: [id], onDelete: Cascade, onUpdate: NoAction, name: "receiver")
+    receiverId String @map("receiver_id")
+
+    rental   Rental? @relation(fields: [rentalId], references: [id], onDelete: Cascade, onUpdate: NoAction)
+    rentalId String  @map("rental_id")
+
+    @@map("messages")
+}
+
+enum Role {
+    USER
+    ADMIN
+}
+
+enum RentalStatus {
+    PENDING
+    ACCEPTED
+    REJECTED
+    FINISHED
+    CANCELLED
+}

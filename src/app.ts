@@ -2,7 +2,7 @@ import fastify from 'fastify';
 import { routes } from 'web/routes/routes';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
-import { env } from 'env';
+// import { env } from 'env';
 import { errorHandler } from 'middleware/errorHandler';
 
 const app = fastify();
@@ -12,7 +12,7 @@ app.register(cors, {
 });
 
 app.register(fastifyJwt, {
-  secret: env.SECRET_KEY,
+  secret: 'secret_key',
 });
 
 app.setErrorHandler(errorHandler);

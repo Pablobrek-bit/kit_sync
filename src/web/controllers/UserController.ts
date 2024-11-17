@@ -1,11 +1,11 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
-import { UserPrismaRespository } from 'repository/prisma/UserPrismaRepository';
-import { AuthService } from 'services/user/AuthService';
-import { CreateUserService } from 'services/user/CreateUserService';
-import { DeleteUserService } from 'services/user/DeleteUserService';
-import { GetUserService } from 'services/user/GetUserService';
-import { IndexUserService } from 'services/user/IndexUserService';
-import { UpdateUserService } from 'services/user/UpdateUserService';
+import { UserPrismaRespository } from '../../repository/prisma/UserPrismaRepository';
+import { AuthService } from '../../services/user/AuthService';
+import { CreateUserService } from '../../services/user/CreateUserService';
+import { DeleteUserService } from '../../services/user/DeleteUserService';
+import { GetUserService } from '../../services/user/GetUserService';
+import { IndexUserService } from '../../services/user/IndexUserService';
+import { UpdateUserService } from '../../services/user/UpdateUserService';
 import { z } from 'zod';
 
 export class UserController {

@@ -28,7 +28,7 @@ services:
     ports:
       - '5433:5432'
 
-  site_kit_sync_test:
+  site_kit_sync_test_db:
     container_name: site_kit_sync_test_db
     image: postgres:13
     environment:
