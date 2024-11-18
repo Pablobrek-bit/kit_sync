@@ -1,6 +1,6 @@
 import type { Role } from '@prisma/client';
-import type { UserRepository } from '../../repository/interfaces/UserRepository';
-import { CreateUserService } from '../../services/user/CreateUserService';
+import type { UserRepository } from '../../../repository/interfaces/UserRepository';
+import { CreateUserService } from '../../../services/user/CreateUserService';
 
 const emailNotExists = 'pablo@gmail.com';
 const emailExists = 'aleatorio@gmail.com';
@@ -47,5 +47,15 @@ describe('Create User Service', () => {
     expect(user).toEqual(mockUser);
     expect(userRepositoryMock.findByEmail).toHaveBeenCalledWith(emailNotExists);
     expect(userRepositoryMock.create).toHaveBeenCalledTimes(1);
+  });
+
+  it('should not be able to create a new user with an existing email', async () => {
+    await expect(
+      createUserService.execute({
+        name: 'Pablo',
+        email: emailExists,
+        password: '123456',
+      }),
+    ).rejects.toThrow('Email already exists');
   });
 });
