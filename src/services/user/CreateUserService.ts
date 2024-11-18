@@ -21,7 +21,7 @@ export class CreateUserService {
     const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
-      throw new Error('User already exists');
+      throw new Error('Email already exists');
     }
 
     const user = await this.userRepository.create({
