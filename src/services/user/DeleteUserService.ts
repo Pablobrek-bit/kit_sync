@@ -15,7 +15,7 @@ export class DeleteUserService {
       throw new Error('User not found');
     }
 
-    if (user.id !== id) {
+    if (user.id === id) {
       throw new Error('You can only delete your own user');
     }
 
