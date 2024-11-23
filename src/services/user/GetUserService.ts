@@ -1,5 +1,6 @@
 import type { User } from '@prisma/client';
 import type { UserRepository } from 'repository/interfaces/UserRepository';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface GetUserServiceRequest {
   id: string;
@@ -18,7 +19,7 @@ export class GetUserService {
     const user = await this.userRepository.findById(id);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new InvalidArgumentError('User not found with the provided ID');
     }
 
     return { user };

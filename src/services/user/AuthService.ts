@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import type { UserRepository } from 'repository/interfaces/UserRepository';
 import bcrypt from 'bcryptjs';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface AuthServiceRequest {
   email: string;
@@ -21,13 +22,13 @@ export class AuthService {
     const user = await this.userRepository.findByEmail(email);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new InvalidArgumentError('User not found with the provided email');
     }
 
     const passwordMatch = await bcrypt.compare(password, user.password);
 
     if (!passwordMatch) {
-      throw new Error('Invalid password');
+      throw new InvalidArgumentError('Invalid password provided');
     }
 
     return { user };

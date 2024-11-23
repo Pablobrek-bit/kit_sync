@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import type { UserRepository } from 'repository/interfaces/UserRepository';
 import bcrypt from 'bcryptjs';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface CreateUserServiceRequest {
   name: string;
@@ -21,7 +22,7 @@ export class CreateUserService {
     const existingUser = await this.userRepository.findByEmail(data.email);
 
     if (existingUser) {
-      throw new Error('Email already exists');
+      throw new InvalidArgumentError('Email already exists');
     }
 
     const user = await this.userRepository.create({

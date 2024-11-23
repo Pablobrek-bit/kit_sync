@@ -1,5 +1,6 @@
 import { Prisma } from '@prisma/client';
 import type { FastifyError, FastifyRequest, FastifyReply } from 'fastify';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 import { ZodError } from 'zod';
 
 export const errorHandler = (
@@ -7,6 +8,11 @@ export const errorHandler = (
   req: FastifyRequest,
   rep: FastifyReply,
 ): void => {
+  if (error instanceof InvalidArgumentError) {
+    console.error(error);
+    rep.status(400).send({ message: error.message });
+  }
+
   if (error instanceof ZodError) {
     console.error(error);
     rep

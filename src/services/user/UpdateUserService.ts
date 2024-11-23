@@ -1,6 +1,7 @@
 import type { User } from '@prisma/client';
 import type { UserRepository } from 'repository/interfaces/UserRepository';
 import bcrypt from 'bcryptjs';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface UpdateUserServiceRequest {
   id: string;
@@ -26,7 +27,7 @@ export class UpdateUserService {
       const user = await this.userRepository.findByEmail(email);
 
       if (user) {
-        throw new Error('Email already in use');
+        throw new InvalidArgumentError('Email already in use');
       }
     }
 

@@ -1,4 +1,5 @@
 import type { UserRepository } from 'repository/interfaces/UserRepository';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface DeleteUserServiceRequest {
   userId: string;
@@ -12,11 +13,11 @@ export class DeleteUserService {
     const user = await this.userRepository.findById(userId);
 
     if (!user) {
-      throw new Error('User not found');
+      throw new InvalidArgumentError('User not found with the provided ID');
     }
 
     if (user.id === id) {
-      throw new Error('You can only delete your own user');
+      throw new InvalidArgumentError('You can only delete your own user');
     }
 
     await this.userRepository.delete(id);
