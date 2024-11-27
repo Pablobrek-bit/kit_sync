@@ -63,4 +63,13 @@ describe('Create User Service', () => {
       }),
     ).rejects.toThrow('User not found');
   });
+
+  it('should not be able to authenticate a user with an invalid email', async () => {
+    await expect(
+      authService.execute({
+        email: emailNotExists,
+        password: '123456',
+      }),
+    ).rejects.toThrow('User not found');
+  });
 });
