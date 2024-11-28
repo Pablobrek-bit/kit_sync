@@ -72,4 +72,13 @@ describe('Create User Service', () => {
       }),
     ).rejects.toThrow('User not found');
   });
+
+  it('should not be able to authenticate a user without email', async () => {
+    await expect(
+      authService.execute({
+        email: '',
+        password: '123456',
+      }),
+    ).rejects.toThrow('User not found');
+  });
 });
