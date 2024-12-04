@@ -2,7 +2,6 @@ import fastify from 'fastify';
 import { routes } from 'web/routes/routes';
 import cors from '@fastify/cors';
 import fastifyJwt from '@fastify/jwt';
-// import { env } from 'env';
 import { errorHandler } from 'middleware/errorHandler';
 
 const app = fastify();
