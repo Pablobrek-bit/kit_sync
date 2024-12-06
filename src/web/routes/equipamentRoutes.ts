@@ -13,4 +13,5 @@ export async function equipamentRoutes(app: FastifyInstance) {
   app.addHook('preHandler', ensureAuthenticated);
 
   app.post('/', equipamentController.create);
+  app.get('/:equipamentId', equipamentController.get);
 }

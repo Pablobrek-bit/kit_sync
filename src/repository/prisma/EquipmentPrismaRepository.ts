@@ -8,4 +8,12 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
 
     return equipament;
   }
+
+  async findById(id: string) {
+    const equipament = await prisma.equipment.findUnique({
+      where: { id },
+    });
+
+    return equipament;
+  }
 }

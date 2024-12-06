@@ -1,6 +1,7 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { CreateEquipamentService } from 'services/equipament/CreateEquipamentService';
+import { GetEquipamentService } from 'services/equipament/GetEquipamentService';
 import { z } from 'zod';
 
 export class EquipamentController {
@@ -31,5 +32,20 @@ export class EquipamentController {
     });
 
     return reply.status(201).send({ equipament });
+  }
+
+  async get(request: FastifyRequest, reply: FastifyReply) {
+    const schemaParams = z.string({
+      required_error: 'EquipamentId is required',
+    });
+
+    const equipamentId = schemaParams.parse(request.params);
+
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const equipmentGetService = new GetEquipamentService(equipmentRepository);
+
+    const { equipament } = await equipmentGetService.execute({ equipamentId });
+
+    return reply.send({ equipament });
   }
 }
