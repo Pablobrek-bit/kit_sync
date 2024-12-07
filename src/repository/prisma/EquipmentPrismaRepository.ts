@@ -16,4 +16,10 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
 
     return equipament;
   }
+
+  async delete(id: string) {
+    await prisma.equipment.delete({
+      where: { id },
+    });
+  }
 }

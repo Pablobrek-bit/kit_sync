@@ -4,4 +4,6 @@ export interface EquipamentRepository {
   create(data: Prisma.EquipmentUncheckedCreateInput): Promise<Equipment>;
 
   findById(id: string): Promise<Equipment | null>;
+
+  delete(id: string): Promise<void>;
 }
