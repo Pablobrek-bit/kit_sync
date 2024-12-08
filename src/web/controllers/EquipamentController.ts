@@ -3,6 +3,7 @@ import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepo
 import { CreateEquipamentService } from 'services/equipament/CreateEquipamentService';
 import { DeleteEquipmentService } from 'services/equipament/DeleteEquipmentService';
 import { GetEquipamentService } from 'services/equipament/GetEquipamentService';
+import { UpdateEquipmentService } from 'services/equipament/UpdateEquipmentService';
 import { z } from 'zod';
 
 export class EquipamentController {
@@ -67,5 +68,41 @@ export class EquipamentController {
     await deleteEquipmentService.execute({ id: equipamentId, userId });
 
     return reply.status(204).send();
+  }
+
+  async update(request: FastifyRequest, reply: FastifyReply) {
+    const schemaParams = z.string({
+      required_error: 'EquipamentId is required',
+    });
+
+    const schema = z.object({
+      name: z.string().optional(),
+      description: z.string().optional(),
+      category: z.string().optional(),
+      dailyPrice: z
+        .number()
+        .positive({ message: 'Daily price must to be positive' })
+        .optional(),
+      available: z.boolean().optional(),
+      photos: z.array(z.string()).optional(),
+    });
+
+    const equipamentId = schemaParams.parse(request.params);
+    const data = schema.parse(request.body);
+
+    const userId = request.user.sub;
+
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const updateEquipmentService = new UpdateEquipmentService(
+      equipmentRepository,
+    );
+
+    const { equipment } = await updateEquipmentService.execute({
+      id: equipamentId,
+      userId,
+      ...data,
+    });
+
+    return reply.send({ equipment });
   }
 }

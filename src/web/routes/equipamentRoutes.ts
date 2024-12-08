@@ -15,4 +15,5 @@ export async function equipamentRoutes(app: FastifyInstance) {
   app.post('/', equipamentController.create);
   app.get('/:equipamentId', equipamentController.get);
   app.delete('/:equipamentId', equipamentController.delete);
+  app.put('/:equipamentId', equipamentController.update);
 }
