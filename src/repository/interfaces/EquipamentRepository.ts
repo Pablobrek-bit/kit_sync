@@ -8,4 +8,11 @@ export interface EquipamentRepository {
   delete(id: string): Promise<void>;
 
   update(data: Prisma.EquipmentUncheckedUpdateInput): Promise<Equipment>;
+
+  index(data: {
+    name?: string;
+    category?: string;
+    dailyPrice?: number;
+    available?: boolean;
+  }): Promise<Equipment[]>;
 }

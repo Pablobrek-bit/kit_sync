@@ -37,4 +37,36 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
 
     return updatedEquipment;
   }
+
+  async index(data: {
+    name?: string;
+    category?: string;
+    dailyPrice?: number;
+    available?: boolean;
+  }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (data.name) {
+      where.name = { contains: data.name };
+    }
+
+    if (data.category) {
+      where.category = { contains: data.category };
+    }
+
+    if (data.dailyPrice) {
+      where.dailyPrice = data.dailyPrice;
+    }
+
+    if (data.available) {
+      where.available = data.available;
+    }
+
+    const equipments = await prisma.equipment.findMany({
+      where,
+    });
+
+    return equipments;
+  }
 }

@@ -3,6 +3,7 @@ import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepo
 import { CreateEquipamentService } from 'services/equipament/CreateEquipamentService';
 import { DeleteEquipmentService } from 'services/equipament/DeleteEquipmentService';
 import { GetEquipamentService } from 'services/equipament/GetEquipamentService';
+import { IndexEquipmentService } from 'services/equipament/IndexEquipmentService';
 import { UpdateEquipmentService } from 'services/equipament/UpdateEquipmentService';
 import { z } from 'zod';
 
@@ -104,5 +105,25 @@ export class EquipamentController {
     });
 
     return reply.send({ equipment });
+  }
+
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    const schema = z.object({
+      name: z.string().optional(),
+      category: z.string().optional(),
+      dailyPrice: z.number().positive().optional(),
+      available: z.boolean().optional(),
+    });
+
+    const data = schema.parse(request.query);
+
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const indexEquipmentService = new IndexEquipmentService(
+      equipmentRepository,
+    );
+
+    const { equipments } = await indexEquipmentService.execute(data);
+
+    return reply.send({ equipments });
   }
 }
