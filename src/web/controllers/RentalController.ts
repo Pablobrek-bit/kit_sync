@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { CreateRentalService } from 'services/rental/CreateRentalService';
+import { GetRentalService } from 'services/rental/GetRentalService';
 import { z } from 'zod';
 
 export class RentalController {
@@ -32,5 +33,21 @@ export class RentalController {
     });
 
     return reply.code(201).send(rental);
+  }
+
+  async get(request: FastifyRequest, reply: FastifyReply) {
+    const rentalId = request.params as string;
+
+    const userId = request.user.sub;
+
+    const rentalRepository = new RentalPrismaRepository();
+    const getRentalService = new GetRentalService(rentalRepository);
+
+    const { rental } = await getRentalService.execute({
+      rentalId,
+      userId,
+    });
+
+    return reply.send(rental);
   }
 }

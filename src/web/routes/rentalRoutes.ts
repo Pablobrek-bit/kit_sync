@@ -14,4 +14,5 @@ export async function rentalRoutes(app: FastifyInstance) {
   app.addHook('preHandler', ensureAuthenticated);
 
   app.post('/', rentalController.create);
+  app.get('/:id', rentalController.get);
 }

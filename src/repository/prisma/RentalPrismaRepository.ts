@@ -8,4 +8,12 @@ export class RentalPrismaRepository implements RentalRepository {
 
     return rental;
   }
+
+  async findById(id: string) {
+    const rental = await prisma.rental.findUnique({
+      where: { id },
+    });
+
+    return rental;
+  }
 }
