@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { CreateRentalService } from 'services/rental/CreateRentalService';
+import { DeleteRentalService } from 'services/rental/DeleteRentalService';
 import { GetRentalService } from 'services/rental/GetRentalService';
 import { z } from 'zod';
 
@@ -49,5 +50,21 @@ export class RentalController {
     });
 
     return reply.send(rental);
+  }
+
+  async delete(request: FastifyRequest, reply: FastifyReply) {
+    const rentalId = request.params as string;
+
+    const userId = request.user.sub;
+
+    const rentalRepository = new RentalPrismaRepository();
+    const deleteRentalService = new DeleteRentalService(rentalRepository);
+
+    await deleteRentalService.execute({
+      rentalId,
+      userId,
+    });
+
+    return reply.code(204).send();
   }
 }

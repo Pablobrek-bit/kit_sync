@@ -16,4 +16,10 @@ export class RentalPrismaRepository implements RentalRepository {
 
     return rental;
   }
+
+  async delete(id: string) {
+    await prisma.rental.delete({
+      where: { id },
+    });
+  }
 }

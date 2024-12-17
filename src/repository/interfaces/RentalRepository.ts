@@ -4,4 +4,6 @@ export interface RentalRepository {
   create(data: Prisma.RentalUncheckedCreateInput): Promise<Rental>;
 
   findById(id: string): Promise<Rental | null>;
+
+  delete(id: string): Promise<void>;
 }
