@@ -6,4 +6,6 @@ export interface RentalRepository {
   findById(id: string): Promise<Rental | null>;
 
   delete(id: string): Promise<void>;
+
+  update(data: Prisma.RentalUpdateInput): Promise<Rental>;
 }

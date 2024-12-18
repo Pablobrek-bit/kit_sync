@@ -22,4 +22,13 @@ export class RentalPrismaRepository implements RentalRepository {
       where: { id },
     });
   }
+
+  async update(data: Prisma.RentalUpdateInput) {
+    const rental = await prisma.rental.update({
+      where: { id: data.id as string },
+      data,
+    });
+
+    return rental;
+  }
 }

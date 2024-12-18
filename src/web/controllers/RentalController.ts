@@ -1,9 +1,11 @@
+import { RentalStatus } from '@prisma/client';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { CreateRentalService } from 'services/rental/CreateRentalService';
 import { DeleteRentalService } from 'services/rental/DeleteRentalService';
 import { GetRentalService } from 'services/rental/GetRentalService';
+import { UpdateRentalService } from 'services/rental/UpdateRentalService';
 import { z } from 'zod';
 
 export class RentalController {
@@ -66,5 +68,38 @@ export class RentalController {
     });
 
     return reply.code(204).send();
+  }
+
+  async update(request: FastifyRequest, reply: FastifyReply) {
+    const schema = z.object({
+      startAt: z
+        .string({ invalid_type_error: 'Start date must be a string' })
+        .optional(),
+      endAt: z
+        .string({ invalid_type_error: 'End date must be a string' })
+        .optional(),
+      status: z
+        .nativeEnum(RentalStatus, {
+          invalid_type_error: 'Status must be a valid',
+        })
+        .optional(),
+    });
+
+    const rentalId = request.params as string;
+    const userId = request.user.sub;
+
+    const { startAt, endAt } = schema.parse(request.body);
+
+    const rentalRepository = new RentalPrismaRepository();
+    const updateRentalService = new UpdateRentalService(rentalRepository);
+
+    const rental = await updateRentalService.execute({
+      rentalId,
+      userId,
+      startAt,
+      endAt,
+    });
+
+    return reply.send(rental);
   }
 }
