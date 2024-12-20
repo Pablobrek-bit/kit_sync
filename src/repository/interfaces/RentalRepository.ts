@@ -1,4 +1,4 @@
-import type { Prisma, Rental } from '@prisma/client';
+import type { Prisma, Rental, RentalStatus } from '@prisma/client';
 
 export interface RentalRepository {
   create(data: Prisma.RentalUncheckedCreateInput): Promise<Rental>;
@@ -8,4 +8,18 @@ export interface RentalRepository {
   delete(id: string): Promise<void>;
 
   update(data: Prisma.RentalUpdateInput): Promise<Rental>;
+
+  index(data: {
+    userId: string;
+    status?: RentalStatus;
+    totalMin?: number;
+    totalMax?: number;
+    startAt?: string;
+    endAt?: string;
+    createdAt?: string;
+    updatedAt?: string;
+    equipmentId?: string;
+    page: number;
+    size: number;
+  }): Promise<Rental[]>;
 }

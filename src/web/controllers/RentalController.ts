@@ -5,6 +5,7 @@ import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository
 import { CreateRentalService } from 'services/rental/CreateRentalService';
 import { DeleteRentalService } from 'services/rental/DeleteRentalService';
 import { GetRentalService } from 'services/rental/GetRentalService';
+import { IndexRentalService } from 'services/rental/IndexRentalService';
 import { UpdateRentalService } from 'services/rental/UpdateRentalService';
 import { z } from 'zod';
 
@@ -101,5 +102,43 @@ export class RentalController {
     });
 
     return reply.send(rental);
+  }
+
+  async index(request: FastifyRequest, reply: FastifyReply) {
+    const schema = z.object({
+      status: z
+        .nativeEnum(RentalStatus, {
+          invalid_type_error: 'Status need to be a valid status',
+        })
+        .optional(),
+      totalMin: z.coerce
+        .number({ invalid_type_error: 'Total Min must to be a number' })
+        .positive({ message: 'Total Min must to be positive' })
+        .optional(),
+      totalMax: z.coerce
+        .number({ invalid_type_error: 'Total Max must to be a number' })
+        .positive({ message: 'Total Max must to be positive' })
+        .optional(),
+      startAt: z.string().optional(),
+      endAt: z.string().optional(),
+      createdAt: z.string().optional(),
+      updatedAt: z.string().optional(),
+      equipmentId: z.string().optional(),
+      page: z.coerce.number().positive().default(1),
+      size: z.coerce.number().positive().default(5),
+    });
+
+    const userId = request.user.sub;
+    const filters = schema.parse(request.query);
+
+    const rentalRepository = new RentalPrismaRepository();
+    const indexRentalService = new IndexRentalService(rentalRepository);
+
+    const { rentals } = await indexRentalService.execute({
+      userId,
+      ...filters,
+    });
+
+    return reply.send(rentals);
   }
 }

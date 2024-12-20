@@ -17,4 +17,5 @@ export async function rentalRoutes(app: FastifyInstance) {
   app.get('/:id', rentalController.get);
   app.delete('/:id', rentalController.delete);
   app.put('/:id', rentalController.update);
+  app.get('/', rentalController.index);
 }
