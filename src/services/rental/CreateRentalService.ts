@@ -26,7 +26,6 @@ export class CreateRentalService {
     renterId,
     startAt,
   }: CreateRentalServiceRequest): Promise<CreateRentalServiceResponse> {
-    // verificar se o equipamento existe
     const equipment = await this.equipmentRepository.findById(equipmentId);
 
     if (!equipment) {
@@ -37,7 +36,6 @@ export class CreateRentalService {
       throw new InvalidArgumentError('Equipment not available');
     }
 
-    // verificar se a data de termino é maior que a data de inicio
     const startDate = new Date(startAt);
     const endDate = new Date(endAt);
 
@@ -45,15 +43,12 @@ export class CreateRentalService {
       throw new InvalidArgumentError('Invalid date range');
     }
 
-    // calcular o total do aluguel
-
     const totalDays = Math.ceil(
       (endDate.getTime() - startDate.getTime()) / (1000 * 60 * 60 * 24),
     );
 
     const total = totalDays * equipment.dailyPrice;
 
-    // criar o aluguel
     const rental = await this.rentalRepository.create({
       equipmentId,
       status: 'PENDING',
