@@ -2,6 +2,8 @@ import type { EquipamentRepository } from '../../../repository/interfaces/Equipa
 import { IndexEquipmentService } from '../../../services/equipament/IndexEquipmentService';
 
 const idEquipmentExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407b';
+const page = 1;
+const size = 5;
 const mockEquipment = {
   id: idEquipmentExists,
   name: 'Furadeira',
@@ -60,13 +62,17 @@ describe('Get Equipment Service', () => {
   });
 
   it('should return all equipments', async () => {
-    const response = await indexEquipmentService.execute({});
+    const response = await indexEquipmentService.execute({ page, size });
 
     expect(response.equipments).toHaveLength(1);
   });
 
   it('should return equipments by name', async () => {
-    const response = await indexEquipmentService.execute({ name: 'Furadeira' });
+    const response = await indexEquipmentService.execute({
+      name: 'Furadeira',
+      page,
+      size,
+    });
 
     expect(response.equipments).toHaveLength(1);
   });
@@ -74,19 +80,29 @@ describe('Get Equipment Service', () => {
   it('should return equipments by category', async () => {
     const response = await indexEquipmentService.execute({
       category: 'Ferramentas',
+      page,
+      size,
     });
 
     expect(response.equipments).toHaveLength(1);
   });
 
   it('should return equipments by daily price', async () => {
-    const response = await indexEquipmentService.execute({ dailyPrice: 10 });
+    const response = await indexEquipmentService.execute({
+      dailyPrice: 10,
+      page,
+      size,
+    });
 
     expect(response.equipments).toHaveLength(1);
   });
 
   it('should return equipments by availability', async () => {
-    const response = await indexEquipmentService.execute({ available: true });
+    const response = await indexEquipmentService.execute({
+      available: true,
+      page,
+      size,
+    });
 
     expect(response.equipments).toHaveLength(1);
   });
@@ -94,13 +110,17 @@ describe('Get Equipment Service', () => {
   it('should return empty array if no equipment is found', async () => {
     equipamentRepositoryMock.index.mockResolvedValue([]);
 
-    const response = await indexEquipmentService.execute({});
+    const response = await indexEquipmentService.execute({ page, size });
 
     expect(response.equipments).toHaveLength(0);
   });
 
   it('should return empty array if no equipment is found by name', async () => {
-    const response = await indexEquipmentService.execute({ name: 'Serra' });
+    const response = await indexEquipmentService.execute({
+      name: 'Serra',
+      page,
+      size,
+    });
 
     expect(response.equipments).toHaveLength(0);
   });
@@ -108,13 +128,19 @@ describe('Get Equipment Service', () => {
   it('should return empty array if no equipment is found by category', async () => {
     const response = await indexEquipmentService.execute({
       category: 'Eletrodomésticos',
+      page,
+      size,
     });
 
     expect(response.equipments).toHaveLength(0);
   });
 
   it('should return empty array if no equipment is found by daily price', async () => {
-    const response = await indexEquipmentService.execute({ dailyPrice: 20 });
+    const response = await indexEquipmentService.execute({
+      dailyPrice: 20,
+      page,
+      size,
+    });
 
     expect(response.equipments).toHaveLength(0);
   });
