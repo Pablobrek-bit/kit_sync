@@ -14,7 +14,6 @@ interface IndexUserServiceRequest {
 interface IndexUserServiceResponse {
   users: User[];
 }
-//
 export class IndexUserService {
   constructor(private userRepository: UserRepository) {}
 

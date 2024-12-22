@@ -43,6 +43,8 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
     category?: string;
     dailyPrice?: number;
     available?: boolean;
+    page: number;
+    size: number;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
@@ -65,6 +67,7 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
 
     const equipments = await prisma.equipment.findMany({
       where,
+      skip: (data.page - 1) * data.size,
     });
 
     return equipments;

@@ -6,6 +6,8 @@ interface IndexEquipmentServiceRequest {
   category?: string;
   dailyPrice?: number;
   available?: boolean;
+  page: number;
+  size: number;
 }
 
 interface IndexEquipmentServiceResponse {
