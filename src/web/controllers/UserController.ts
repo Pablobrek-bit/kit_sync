@@ -122,7 +122,7 @@ export class UserController {
           .default('updatedAt'),
         order: z.enum(['asc', 'desc']).optional().default('desc'),
         page: z.number().int().positive().optional().default(1),
-        size: z.number().int().positive().optional().default(10),
+        size: z.number().int().positive().optional().default(5),
       })
       .strict();
 

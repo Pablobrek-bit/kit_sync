@@ -111,8 +111,23 @@ export class EquipamentController {
     const schema = z.object({
       name: z.string().optional(),
       category: z.string().optional(),
-      dailyPrice: z.number().positive().optional(),
-      available: z.boolean().optional(),
+      dailyPrice: z.coerce
+        .number({ invalid_type_error: 'Daily Price must to be a type number' })
+        .positive({ message: 'Daily Price must to be positive' })
+        .optional(),
+      available: z.coerce
+        .boolean({ invalid_type_error: 'Available must to be a type boolean' })
+        .optional(),
+      page: z.coerce
+        .number({ invalid_type_error: 'Page must to be a type number' })
+        .positive({ message: 'Page must to be positive' })
+        .default(1),
+      size: z.coerce
+        .number({
+          invalid_type_error: 'Size must to be a type number',
+        })
+        .positive({ message: 'Size must to be positive' })
+        .default(5),
     });
 
     const data = schema.parse(request.query);
