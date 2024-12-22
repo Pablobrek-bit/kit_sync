@@ -13,7 +13,7 @@ export class EquipamentController {
       name: z.string({ required_error: 'Name is required' }),
       description: z.string({ required_error: 'Description is required' }),
       category: z.string({ required_error: 'Category is required' }),
-      dailyPrice: z
+      dailyPrice: z.coerce
         .number({ required_error: 'Daily price is required' })
         .positive({ message: 'Daily price must be positive' }),
       available: z.boolean().optional(),
@@ -38,11 +38,13 @@ export class EquipamentController {
   }
 
   async get(request: FastifyRequest, reply: FastifyReply) {
-    const schemaParams = z.string({
-      required_error: 'EquipamentId is required',
+    const schemaParams = z.object({
+      equipamentId: z.string({
+        required_error: 'EquipamentId is required',
+      }),
     });
 
-    const equipamentId = schemaParams.parse(request.params);
+    const { equipamentId } = schemaParams.parse(request.params);
 
     const equipmentRepository = new EquipmentPrismaRepository();
     const equipmentGetService = new GetEquipamentService(equipmentRepository);
@@ -53,11 +55,13 @@ export class EquipamentController {
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    const schemaParams = z.string({
-      required_error: 'EquipamentId is required',
+    const schemaParams = z.object({
+      equipamentId: z.string({
+        required_error: 'EquipamentId is required',
+      }),
     });
 
-    const equipamentId = schemaParams.parse(request.params);
+    const { equipamentId } = schemaParams.parse(request.params);
 
     const userId = request.user.sub;
 
@@ -72,8 +76,10 @@ export class EquipamentController {
   }
 
   async update(request: FastifyRequest, reply: FastifyReply) {
-    const schemaParams = z.string({
-      required_error: 'EquipamentId is required',
+    const schemaParams = z.object({
+      equipamentId: z.string({
+        required_error: 'EquipamentId is required',
+      }),
     });
 
     const schema = z.object({
@@ -88,7 +94,7 @@ export class EquipamentController {
       photos: z.array(z.string()).optional(),
     });
 
-    const equipamentId = schemaParams.parse(request.params);
+    const { equipamentId } = schemaParams.parse(request.params);
     const data = schema.parse(request.body);
 
     const userId = request.user.sub;
