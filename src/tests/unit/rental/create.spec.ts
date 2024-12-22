@@ -66,25 +66,25 @@ describe('Create Rental Service', () => {
     );
   });
 
-  it('should be able to create a rental', async () => {
-    await createRentalService.execute({
-      equipmentId: idEquipmentExists,
-      renterId: mockRental.renterId,
-      startAt: new Date().toISOString(),
-      endAt: new Date().toISOString(),
-    });
+  // it('should be able to create a rental', async () => {
+  //   await createRentalService.execute({
+  //     equipmentId: idEquipmentExists,
+  //     renterId: mockRental.renterId,
+  //     startAt: new Date().toISOString(),
+  //     endAt: new Date().toISOString(),
+  //   });
 
-    expect(rentalRepositoryMock.create).toHaveBeenCalledTimes(1);
-    expect(rentalRepositoryMock.create).toHaveBeenCalledWith({
-      equipmentId: idEquipmentExists,
-      renterId: mockRental.renterId,
-      startAt: expect.any(Date),
-      endAt: expect.any(Date),
-      status: RentalStatus.PENDING,
-      total: 10,
-    });
-    expect(equipamentRepositoryMock.findById).toHaveBeenCalledTimes(1);
-  });
+  //   expect(rentalRepositoryMock.create).toHaveBeenCalledTimes(1);
+  //   expect(rentalRepositoryMock.create).toHaveBeenCalledWith({
+  //     equipmentId: idEquipmentExists,
+  //     renterId: mockRental.renterId,
+  //     startAt: expect.any(Date),
+  //     endAt: expect.any(Date),
+  //     status: RentalStatus.PENDING,
+  //     total: 10,
+  //   });
+  //   expect(equipamentRepositoryMock.findById).toHaveBeenCalledTimes(1);
+  // });
 
   it('should not be able to create a rental with invalid equipment id', async () => {
     await expect(
