@@ -5,8 +5,8 @@
   "main": "index.js",
   "scripts": {
     "dev": "tsx watch src/server.ts",
-    "lint": "eslint . --ext .js,.jsx,.ts,.tsx",
-    "lint:fix": "eslint . --ext .js,.jsx,.ts,.tsx --fix",
+    "lint": "eslint . .js,.jsx,.ts,.tsx",
+    "lint:fix": "eslint . .js,.jsx,.ts,.tsx --fix",
     "prepare": "husky",
     "test": "jest src/tests/unit",
     "setup-db": "docker-compose up -d site_kit_sync_test_db && timeout /t 5 && npx prisma migrate deploy --schema=./prisma/schema.test.prisma",
