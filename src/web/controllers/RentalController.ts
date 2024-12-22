@@ -132,8 +132,14 @@ export class RentalController {
       createdAt: z.string().optional(),
       updatedAt: z.string().optional(),
       equipmentId: z.string().optional(),
-      page: z.coerce.number().positive().default(1),
-      size: z.coerce.number().positive().default(5),
+      page: z.coerce
+        .number({ invalid_type_error: 'Page must to be type number' })
+        .positive({ message: 'Page must to be positive' })
+        .default(1),
+      size: z.coerce
+        .number({ invalid_type_error: 'Size must to be type number' })
+        .positive({ message: 'Size must to be positive' })
+        .default(5),
     });
 
     const userId = request.user.sub;
