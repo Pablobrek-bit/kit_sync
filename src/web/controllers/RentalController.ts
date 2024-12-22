@@ -56,8 +56,14 @@ export class RentalController {
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    const rentalId = request.params as string;
+    const schema = z.object({
+      status: z.nativeEnum(RentalStatus, {
+        invalid_type_error: 'Status must be a valid',
+      }),
+    });
 
+    const rentalId = request.params as string;
+    const { status } = schema.parse(request.body);
     const userId = request.user.sub;
 
     const rentalRepository = new RentalPrismaRepository();
@@ -66,6 +72,7 @@ export class RentalController {
     await deleteRentalService.execute({
       rentalId,
       userId,
+      status,
     });
 
     return reply.code(204).send();
@@ -89,7 +96,7 @@ export class RentalController {
     const rentalId = request.params as string;
     const userId = request.user.sub;
 
-    const { startAt, endAt } = schema.parse(request.body);
+    const { startAt, endAt, status } = schema.parse(request.body);
 
     const rentalRepository = new RentalPrismaRepository();
     const updateRentalService = new UpdateRentalService(rentalRepository);
@@ -99,6 +106,7 @@ export class RentalController {
       userId,
       startAt,
       endAt,
+      status,
     });
 
     return reply.send(rental);

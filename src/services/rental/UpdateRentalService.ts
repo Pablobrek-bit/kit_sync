@@ -1,4 +1,4 @@
-import type { Rental } from '@prisma/client';
+import type { Rental, RentalStatus } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
 
 interface UpdateRentalServiceRequest {
@@ -6,6 +6,7 @@ interface UpdateRentalServiceRequest {
   userId: string;
   startAt?: string;
   endAt?: string;
+  status?: RentalStatus;
 }
 
 interface UpdateRentalServiceResponse {
@@ -20,6 +21,7 @@ export class UpdateRentalService {
     userId,
     endAt,
     startAt,
+    status,
   }: UpdateRentalServiceRequest): Promise<UpdateRentalServiceResponse> {
     const rental = await this.rentalRepository.findById(rentalId);
 
@@ -43,6 +45,7 @@ export class UpdateRentalService {
       id: rentalId,
       endAt,
       startAt,
+      status,
     });
 
     return { rental: newRental };
