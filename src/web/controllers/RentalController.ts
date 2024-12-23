@@ -40,7 +40,11 @@ export class RentalController {
   }
 
   async get(request: FastifyRequest, reply: FastifyReply) {
-    const rentalId = request.params as string;
+    const schemaParams = z.object({
+      id: z.string({ required_error: 'Rental ID is required' }),
+    });
+
+    const { id: rentalId } = schemaParams.parse(request.params);
 
     const userId = request.user.sub;
 
@@ -59,10 +63,15 @@ export class RentalController {
     const schema = z.object({
       status: z.nativeEnum(RentalStatus, {
         invalid_type_error: 'Status must be a valid',
+        required_error: 'Status is required',
       }),
     });
 
-    const rentalId = request.params as string;
+    const schemaParams = z.object({
+      id: z.string({ required_error: 'Rental ID is required' }),
+    });
+
+    const { id: rentalId } = schemaParams.parse(request.params);
     const { status } = schema.parse(request.body);
     const userId = request.user.sub;
 
@@ -93,7 +102,11 @@ export class RentalController {
         .optional(),
     });
 
-    const rentalId = request.params as string;
+    const schemaParams = z.object({
+      id: z.string({ required_error: 'Rental ID is required' }),
+    });
+
+    const { id: rentalId } = schemaParams.parse(request.params);
     const userId = request.user.sub;
 
     const { startAt, endAt, status } = schema.parse(request.body);
@@ -142,14 +155,14 @@ export class RentalController {
         .default(5),
     });
 
-    const userId = request.user.sub;
+    const renterId = request.user.sub;
     const filters = schema.parse(request.query);
 
     const rentalRepository = new RentalPrismaRepository();
     const indexRentalService = new IndexRentalService(rentalRepository);
 
     const { rentals } = await indexRentalService.execute({
-      userId,
+      renterId,
       ...filters,
     });
 
