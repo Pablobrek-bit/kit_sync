@@ -21,10 +21,9 @@ export class DeleteRentalService {
       throw new Error('You are not allowed to delete this rental');
     }
 
-    if (
-      rental.status != RentalStatus.FINISHED &&
-      rental.status != RentalStatus.CANCELLED
-    ) {
+    console.log(rental.status);
+
+    if (status != RentalStatus.FINISHED && status != RentalStatus.CANCELLED) {
       throw new Error(
         'You can only delete a rental with status FINISHED or CANCELLED',
       );
