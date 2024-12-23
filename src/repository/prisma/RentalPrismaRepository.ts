@@ -33,7 +33,7 @@ export class RentalPrismaRepository implements RentalRepository {
   }
 
   async index(data: {
-    userId: string;
+    renterId: string;
     status?: RentalStatus;
     totalMin?: number;
     totalMax?: number;
@@ -94,7 +94,7 @@ export class RentalPrismaRepository implements RentalRepository {
     const rentals = await prisma.rental.findMany({
       where: {
         ...where,
-        userId: data.userId,
+        renterId: data.renterId,
       },
       skip: data.page ? (data.page - 1) * data.size : undefined,
       take: data.size,

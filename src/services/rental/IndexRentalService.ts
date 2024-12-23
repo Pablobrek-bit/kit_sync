@@ -2,7 +2,7 @@ import type { Rental, RentalStatus } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
 
 interface IndexRentalServiceRequest {
-  userId: string;
+  renterId: string;
   status?: RentalStatus;
   totalMin?: number;
   totalMax?: number;

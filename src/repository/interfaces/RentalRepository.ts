@@ -10,7 +10,7 @@ export interface RentalRepository {
   update(data: Prisma.RentalUpdateInput): Promise<Rental>;
 
   index(data: {
-    userId: string;
+    renterId: string;
     status?: RentalStatus;
     totalMin?: number;
     totalMax?: number;
