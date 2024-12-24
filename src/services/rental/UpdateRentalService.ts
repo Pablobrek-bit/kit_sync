@@ -33,12 +33,67 @@ export class UpdateRentalService {
       throw new Error('You are not allowed to update this rental');
     }
 
+    const normalizeDate = (date: Date) => {
+      const normalizedDate = new Date(date);
+      normalizedDate.setHours(0, 0, 0, 0);
+      return normalizedDate;
+    };
+
+    if (startAt && endAt) {
+      const startAtDate = new Date(startAt);
+      const endAtDate = new Date(endAt);
+      const now = normalizeDate(new Date());
+
+      if (startAtDate < now) {
+        throw new Error('Start date must be greater than the current date');
+      }
+
+      if (startAtDate > endAtDate) {
+        throw new Error('Start date must be less than the end date');
+      }
+
+      rental.startAt = startAtDate;
+
+      rental.endAt = endAtDate;
+    }
+
     if (startAt) {
-      rental.startAt = new Date(startAt);
+      const startAtDate = new Date(startAt);
+      const now = normalizeDate(new Date());
+
+      if (startAtDate < now) {
+        throw new Error('Start date must be greater than the current date');
+      }
+
+      if (rental.endAt) {
+        const endAtDate = normalizeDate(new Date(rental.endAt));
+
+        if (startAtDate > endAtDate) {
+          throw new Error('Start date must be less than the end date');
+        }
+      }
+
+      rental.startAt = startAtDate;
     }
 
     if (endAt) {
-      rental.endAt = new Date(endAt);
+      const endAtDate = new Date(endAt);
+      const now = normalizeDate(new Date());
+
+      if (endAtDate < now) {
+        throw new Error('End date must be greater than the current date');
+      }
+
+      if (rental.startAt) {
+        const startAtDate = normalizeDate(new Date(rental.startAt));
+        console.log('StartAtDate:', startAtDate);
+
+        if (endAtDate < startAtDate) {
+          throw new Error('End date must be greater than the start date');
+        }
+      }
+
+      rental.endAt = endAtDate;
     }
 
     const newRental = await this.rentalRepository.update({

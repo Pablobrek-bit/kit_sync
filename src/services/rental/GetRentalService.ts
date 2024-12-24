@@ -17,7 +17,6 @@ export class GetRentalService {
     rentalId,
     userId,
   }: GetRentalServiceRequest): Promise<GetRentalServiceResponse> {
-    // verificar se o usuário é o dono do aluguel
     const rental = await this.rentalRepository.findById(rentalId);
 
     if (!rental) {
