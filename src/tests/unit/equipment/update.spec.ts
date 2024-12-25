@@ -1,82 +1,21 @@
-import type { Prisma } from '@prisma/client';
-import type { EquipamentRepository } from '../../../repository/interfaces/EquipamentRepository';
 import { UpdateEquipmentService } from '../../../services/equipament/UpdateEquipmentService';
-
-const existsId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407e';
-const notExistsId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407f';
-const propertyId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407b';
-const notPropertyId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407c';
-const mockEquipment = {
-  id: existsId,
-  name: 'Furadeira',
-  description: 'Furadeira de impacto',
-  category: 'Ferramentas',
-  dailyPrice: 10,
-  available: true,
-  photos: ['https://example.com/photo.jpg'],
-  propertyId: propertyId,
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const equipamentRepositoryMock: jest.Mocked<EquipamentRepository> = {
-  create: jest.fn(),
-  findById: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  index: jest.fn(),
-};
+import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 
 describe('Update Equipment Service', () => {
   let updateEquipmentService: UpdateEquipmentService;
+  let equipmentMock: EquipmentMock;
 
   beforeEach(() => {
-    equipamentRepositoryMock.findById.mockImplementation(async (id: string) => {
-      if (id !== existsId) {
-        return null;
-      }
-
-      return mockEquipment;
-    });
-
-    equipamentRepositoryMock.update.mockImplementation(
-      async (data: Prisma.EquipmentUpdateInput) => {
-        if (data.name && typeof data.name === 'string') {
-          mockEquipment.name = data.name;
-        }
-        if (data.description && typeof data.description === 'string') {
-          mockEquipment.description = data.description;
-        }
-
-        if (data.category && typeof data.category === 'string') {
-          mockEquipment.category = data.category;
-        }
-
-        if (data.dailyPrice && typeof data.dailyPrice === 'number') {
-          mockEquipment.dailyPrice = data.dailyPrice;
-        }
-
-        if (typeof data.available === 'boolean') {
-          mockEquipment.available = data.available;
-        }
-
-        if (data.photos && Array.isArray(data.photos)) {
-          mockEquipment.photos = data.photos;
-        }
-
-        return mockEquipment;
-      },
-    );
-
+    equipmentMock = new EquipmentMock();
     updateEquipmentService = new UpdateEquipmentService(
-      equipamentRepositoryMock,
+      equipmentMock.equipamentRepositoryMock,
     );
   });
 
   it('should be able to update equipment name', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       name: 'Martelo',
     });
 
@@ -85,8 +24,8 @@ describe('Update Equipment Service', () => {
 
   it('should be able to update equipment description', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       description: 'Martelo de unha',
     });
 
@@ -95,8 +34,8 @@ describe('Update Equipment Service', () => {
 
   it('should be able to update equipment category', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       category: 'Ferramentas manuais',
     });
 
@@ -105,8 +44,8 @@ describe('Update Equipment Service', () => {
 
   it('should be able to update equipment daily price', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       dailyPrice: 20,
     });
 
@@ -115,8 +54,8 @@ describe('Update Equipment Service', () => {
 
   it('should be able to update equipment available', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       available: false,
     });
 
@@ -125,8 +64,8 @@ describe('Update Equipment Service', () => {
 
   it('should be able to update equipment photos', async () => {
     const response = await updateEquipmentService.execute({
-      id: existsId,
-      userId: mockEquipment.propertyId,
+      id: equipmentMock.idEquipmentExists,
+      userId: equipmentMock.mockEquipment.propertyId,
       photos: ['https://example.com/photo2.jpg'],
     });
 
@@ -138,8 +77,8 @@ describe('Update Equipment Service', () => {
   it('should not be able to update equipment that does not exists', async () => {
     await expect(
       updateEquipmentService.execute({
-        id: notExistsId,
-        userId: mockEquipment.propertyId,
+        id: equipmentMock.idEquipmentNotExists,
+        userId: equipmentMock.mockEquipment.propertyId,
       }),
     ).rejects.toBeInstanceOf(Error);
   });
@@ -147,8 +86,8 @@ describe('Update Equipment Service', () => {
   it('should not be able to update equipment that is not yours', async () => {
     await expect(
       updateEquipmentService.execute({
-        id: existsId,
-        userId: notPropertyId,
+        id: equipmentMock.idEquipmentExists,
+        userId: equipmentMock.notPropertyId,
       }),
     ).rejects.toBeInstanceOf(Error);
   });
@@ -157,7 +96,7 @@ describe('Update Equipment Service', () => {
     await expect(
       updateEquipmentService.execute({
         id: 'invalid-id',
-        userId: mockEquipment.propertyId,
+        userId: equipmentMock.mockEquipment.propertyId,
       }),
     ).rejects.toBeInstanceOf(Error);
   });

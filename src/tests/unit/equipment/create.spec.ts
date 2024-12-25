@@ -1,35 +1,14 @@
-import type { EquipamentRepository } from '../../../repository/interfaces/EquipamentRepository';
+import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 import { CreateEquipamentService } from '../../../services/equipament/CreateEquipamentService';
-
-const mockEquipment = {
-  id: '4a95d2c8-7e33-4215-85f1-46bd6a3a407e',
-  name: 'Furadeira',
-  description: 'Furadeira de impacto',
-  category: 'Ferramentas',
-  dailyPrice: 10,
-  available: true,
-  photos: ['https://example.com/photo.jpg'],
-  propertyId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407b',
-  createdAt: new Date(),
-  updatedAt: new Date(),
-};
-
-const equipamentRepositoryMock: jest.Mocked<EquipamentRepository> = {
-  create: jest.fn(),
-  findById: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  index: jest.fn(),
-};
 
 describe('Create Equipment Service', () => {
   let createEquipmentService: CreateEquipamentService;
+  let equipmentMock: EquipmentMock;
 
   beforeEach(() => {
-    equipamentRepositoryMock.create.mockResolvedValue(mockEquipment);
-
+    equipmentMock = new EquipmentMock();
     createEquipmentService = new CreateEquipamentService(
-      equipamentRepositoryMock,
+      equipmentMock.equipamentRepositoryMock,
     );
   });
 
@@ -44,7 +23,9 @@ describe('Create Equipment Service', () => {
       propertyId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407b',
     });
 
-    expect(equipament).toEqual(mockEquipment);
-    expect(equipamentRepositoryMock.create).toHaveBeenCalledTimes(1);
+    expect(equipament).toEqual(equipmentMock.mockEquipment);
+    expect(equipmentMock.equipamentRepositoryMock.create).toHaveBeenCalledTimes(
+      1,
+    );
   });
 });
