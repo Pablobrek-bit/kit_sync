@@ -1,84 +1,22 @@
-import { RentalStatus, type Prisma } from '@prisma/client';
-import type { RentalRepository } from 'repository/interfaces/RentalRepository';
+import { RentalStatus } from '@prisma/client';
 import { UpdateRentalService } from 'services/rental/UpdateRentalService';
-
-const idRentalExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407e';
-const idRentalNotExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407z';
-const mockRental: {
-  id: string;
-  status: RentalStatus;
-  total: number;
-  endAt: Date;
-  startAt: Date;
-  createdAt: Date;
-  updatedAt: Date;
-  renterId: string;
-  equipmentId: string;
-  deleteAt: Date | null;
-} = {
-  id: idRentalExists,
-  status: RentalStatus.PENDING,
-  total: 10,
-  endAt: new Date(),
-  startAt: new Date(),
-  createdAt: new Date(),
-  updatedAt: new Date(),
-  renterId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407b',
-  equipmentId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407z',
-  deleteAt: null,
-};
-
-const rentalRepositoryMock: jest.Mocked<RentalRepository> = {
-  create: jest.fn(),
-  findById: jest.fn(),
-  update: jest.fn(),
-  delete: jest.fn(),
-  index: jest.fn(),
-};
+import { RentalMock } from 'tests/mocks/RentalMock';
 
 describe('Update Rental Service', () => {
   let updateRentalService: UpdateRentalService;
+  let rentalMock: RentalMock;
 
   beforeEach(() => {
-    rentalRepositoryMock.findById.mockImplementation(async (id: string) => {
-      if (id !== idRentalExists) {
-        return null;
-      }
-
-      return mockRental;
-    });
-
-    rentalRepositoryMock.update.mockImplementation(
-      async (data: Prisma.RentalUpdateInput) => {
-        if (data.status) {
-          if (typeof data.status === 'string') {
-            mockRental.status = data.status as RentalStatus;
-          }
-        }
-
-        if (data.startAt) {
-          if (data.startAt instanceof Date) {
-            mockRental.startAt = data.startAt;
-          }
-        }
-
-        if (data.endAt) {
-          if (data.endAt instanceof Date) {
-            mockRental.endAt = data.endAt;
-          }
-        }
-
-        return mockRental;
-      },
+    rentalMock = new RentalMock();
+    updateRentalService = new UpdateRentalService(
+      rentalMock.rentalRepositoryMock,
     );
-
-    updateRentalService = new UpdateRentalService(rentalRepositoryMock);
   });
 
   it('should update a rental', async () => {
     const { rental } = await updateRentalService.execute({
-      rentalId: idRentalExists,
-      userId: mockRental.renterId,
+      rentalId: rentalMock.idRentalExists,
+      userId: rentalMock.mockRental.renterId,
       startAt: new Date().toISOString() + 1000 * 60 * 60 * 24,
     });
 
@@ -88,8 +26,8 @@ describe('Update Rental Service', () => {
   it('should throw an error if rental does not exist', async () => {
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalNotExists,
-        userId: mockRental.renterId,
+        rentalId: rentalMock.idRentalNotExists,
+        userId: rentalMock.mockRental.renterId,
       }),
     ).rejects.toThrow('Rental not found');
   });
@@ -97,7 +35,7 @@ describe('Update Rental Service', () => {
   it('should throw an error if user is not allowed to update the rental', async () => {
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalExists,
+        rentalId: rentalMock.idRentalExists,
         userId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407c',
       }),
     ).rejects.toThrow('You are not allowed to update this rental');
@@ -106,8 +44,8 @@ describe('Update Rental Service', () => {
   it('should throw an error if start date is less than current date', async () => {
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalExists,
-        userId: mockRental.renterId,
+        rentalId: rentalMock.idRentalExists,
+        userId: rentalMock.mockRental.renterId,
         startAt: new Date(
           new Date().getTime() - 1000 * 60 * 60 * 24,
         ).toISOString(),
@@ -118,8 +56,8 @@ describe('Update Rental Service', () => {
   it('should throw an error if start date is greater than end date', async () => {
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalExists,
-        userId: mockRental.renterId,
+        rentalId: rentalMock.idRentalExists,
+        userId: rentalMock.mockRental.renterId,
         startAt: new Date(
           new Date().getTime() + 1000 * 60 * 60 * 24,
         ).toISOString(),
@@ -131,8 +69,8 @@ describe('Update Rental Service', () => {
   it('should throw an error if end date is less than current date', async () => {
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalExists,
-        userId: mockRental.renterId,
+        rentalId: rentalMock.idRentalExists,
+        userId: rentalMock.mockRental.renterId,
         endAt: new Date(
           new Date().getTime() - 1000 * 60 * 60 * 24,
         ).toISOString(),
@@ -148,8 +86,8 @@ describe('Update Rental Service', () => {
 
     await expect(
       updateRentalService.execute({
-        rentalId: idRentalExists,
-        userId: mockRental.renterId,
+        rentalId: rentalMock.idRentalExists,
+        userId: rentalMock.mockRental.renterId,
         startAt: newStartAt,
         endAt: newEndAt,
       }),
@@ -158,8 +96,8 @@ describe('Update Rental Service', () => {
 
   it('should update a rental with status', async () => {
     const { rental } = await updateRentalService.execute({
-      rentalId: idRentalExists,
-      userId: mockRental.renterId,
+      rentalId: rentalMock.idRentalExists,
+      userId: rentalMock.mockRental.renterId,
       status: RentalStatus.FINISHED,
     });
 

@@ -2,6 +2,7 @@ import { RentalStatus, type Prisma, type Rental } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
 
 export class RentalMock {
+  // Mocked repository
   public rentalRepositoryMock: jest.Mocked<RentalRepository> = {
     create: jest.fn(),
     findById: jest.fn(),
@@ -10,11 +11,11 @@ export class RentalMock {
     index: jest.fn(),
   };
 
+  // Mocked data
   public idRentalExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407e';
   public idRentalNotExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407z';
   public renterIdBelongsToRental = '4a95d2c8-7e33-4215-85f1-46bd6a3a407b';
   public renterIdNotBelongsToRental = '4a95d2c8-7e33-4215-85f1-46bd6a3a407c';
-
   public mockRental: Rental = {
     id: this.idRentalExists,
     status: RentalStatus.PENDING,
@@ -28,7 +29,9 @@ export class RentalMock {
     deleteAt: null,
   };
 
+  // Mocked methods
   public constructor() {
+    this.rentalRepositoryMock.index.mockResolvedValue([this.mockRental]);
     this.rentalRepositoryMock.index.mockImplementation(async (data) => {
       if (data.renterId === this.renterIdNotBelongsToRental) {
         return [];
@@ -94,5 +97,7 @@ export class RentalMock {
         return this.mockRental;
       },
     );
+
+    this.rentalRepositoryMock.create.mockResolvedValue(this.mockRental);
   }
 }
