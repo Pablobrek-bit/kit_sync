@@ -75,10 +75,15 @@ export class UserController {
     const id = request.user.sub;
 
     const requestSchema = z.object({
-      name: z.string().optional(),
-      email: z.string().email({ message: 'Invalid Email' }).optional(),
+      name: z
+        .string({ invalid_type_error: 'Name must to be a string' })
+        .optional(),
+      email: z
+        .string({ invalid_type_error: 'Email must to be a string' })
+        .email({ message: 'Invalid Email' })
+        .optional(),
       password: z
-        .string()
+        .string({ invalid_type_error: 'Password must to be a string' })
         .min(6, { message: 'Password must have at least 6 characters' })
         .optional(),
     });
@@ -88,9 +93,9 @@ export class UserController {
     const userRepository = new UserPrismaRespository();
     const updateUserService = new UpdateUserService(userRepository);
 
-    const updatedUser = await updateUserService.execute({ id, ...data });
+    const { user } = await updateUserService.execute({ id, ...data });
 
-    return reply.code(200).send(updatedUser);
+    return reply.code(200).send(user);
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
@@ -99,6 +104,8 @@ export class UserController {
     });
 
     const { userId } = paramsSchema.parse(request.params);
+
+    console.log('chegou aqui');
 
     const id = request.user.sub;
 
