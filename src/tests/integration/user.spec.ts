@@ -1,7 +1,15 @@
+import { prisma } from 'lib/prisma';
 import { app } from '../../app';
 import request from 'supertest';
 
 describe('User API Integration Tests', () => {
+  let token: string;
+  const user = {
+    name: 'Pablo',
+    email: 'pabloTest@gmail.com',
+    password: '123456',
+  };
+
   beforeAll(async () => {
     await app.ready();
   });
@@ -10,10 +18,22 @@ describe('User API Integration Tests', () => {
     await app.close();
   });
 
+  beforeEach(async () => {
+    await prisma.user.deleteMany();
+
+    await request(app.server).post('/users').send(user);
+
+    const loginResponse = await request(app.server)
+      .post('/auth')
+      .send({ email: user.email, password: user.password });
+
+    token = loginResponse.body.token;
+  });
+
   it('should be able to create a new user', async () => {
     const newUser = {
       name: 'Pablo',
-      email: 'pablo',
+      email: 'pablo@gmail.com',
       password: '123456',
     };
 
@@ -21,6 +41,326 @@ describe('User API Integration Tests', () => {
 
     expect(response.status).toBe(201);
     expect(response.body.user).toHaveProperty('id');
+  });
+
+  it('should not be able to create a new user with an existing email', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body).toEqual({ message: 'Email already exists' });
+  });
+
+  it('should not create a user with invalid email', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'invalid-email',
+      password: '123456',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not create a user with invalid password', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should be able to login', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/auth').send({
+      email: newUser.email,
+      password: newUser.password,
+    });
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('token');
+  });
+
+  it('should not be able to login with invalid email', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/auth').send({
+      email: 'invalid email',
+      password: newUser.password,
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to login with invalid password', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/auth').send({
+      email: newUser.email,
+      password: '123',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to login with wrong password', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/auth').send({
+      email: newUser.email,
+      password: '1234567',
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('should not be able to login with wrong password', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).post('/auth').send({
+      email: 'pablo1@gmail.com',
+      password: '123456',
+    });
+
+    expect(response.status).toBe(400);
+  });
+
+  it('should be able to get user profile', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveProperty('id');
+  });
+
+  it('should not be able to get user profile without token', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server).get('/users');
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is missing');
+  });
+
+  it('should not be able to get user profile with invalid token', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users')
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.status).toBe(500);
+  });
+
+  it('should not be able to delete a user if the user not be admin', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/users')
+      .send(newUser);
+
+    const response = await request(app.server)
+      .delete(`/users/${responseCreate.body.user.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Unauthorized');
+  });
+
+  it('should not be able to delete a user without token', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/users')
+      .send(newUser);
+
+    const response = await request(app.server)
+      .delete(`/users/${responseCreate.body.user.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Unauthorized');
+  });
+
+  // it('should not be able to delete a user with invalid token', async () => {
+  //   const newUser = {
+  //     name: 'Pablo',
+  //     email: 'pablo@gmail.com',
+  //     password: '123456',
+  //   };
+
+  //   const responseCreate = await request(app.server)
+  //     .post('/users')
+  //     .send(newUser);
+
+  //   const response = await request(app.server)
+  //     .delete(`/users/${responseCreate.body.user.id}`)
+  //     .set('Authorization', `Bearer invalid-token`);
+
+  //   expect(response.status).toBe(500);
+  // });
+
+  // it('should be able to delete a user if the user be admin', async () => {
+  //   const newUser = {
+  //     name: 'Pablo',
+  //     email: 'pablo@gmail.com',
+  //     password: '123456',
+  //   };
+
+  //   const responseCreate = await request(app.server)
+  //     .post('/users')
+  //     .send(newUser);
+
+  //   const response = await request(app.server)
+  //     .delete(`/users/${responseCreate.body.user.id}`)
+  //     .set('Authorization', `Bearer invalid-token`);
+
+  //   expect(response.status).toBe(500);
+  // });
+
+  it('should be able to update a user', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 'Pablo Henrique' });
+
+    expect(response.status).toBe(200);
+    expect(response.body.name).toEqual('Pablo Henrique');
+  });
+
+  it('should not be able to update a user without token', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .send({ name: 'Pablo Henrique' });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is missing');
+  });
+
+  it('should not be able to update a user with invalid token', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .send({ name: 'Pablo Henrique' })
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.status).toBe(500);
+    expect(response.body.message).toEqual('Authorization header is missing');
+  });
+
+  it('should not be able to update a user with invalid name', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 123 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to update a user with invalid email', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ email: 'invalid-email' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to update a user with invalid password', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ password: '123' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to update a user with invalid password', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ password: 123 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
   });
 });
 
