@@ -362,6 +362,16 @@ describe('User API Integration Tests', () => {
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual('Validation error');
   });
+
+  it('should not be able to update a user with invalid name', async () => {
+    const response = await request(app.server)
+      .put('/users')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ name: 123 });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
 });
 
 // "test:integration": "docker-compose up -d site_kit_sync_test_db && timeout /t 5 && npx prisma migrate deploy --schema=./prisma/schema.test.prisma && npx jest --testPathPattern='tests/integration/.*\\.spec\\.ts$' --runInBand && docker-compose stop site_kit_sync_test_db && docker-compose rm -f site_kit_sync_test_db"
