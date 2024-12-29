@@ -120,16 +120,26 @@ export class UserController {
   async index(request: FastifyRequest, reply: FastifyReply) {
     const requestSchema = z
       .object({
-        name: z.string().optional(),
-        createdAt: z.string().optional(),
-        updatedAt: z.string().optional(),
+        name: z
+          .string({ invalid_type_error: 'Name must be a string' })
+          .optional(),
+        email: z
+          .string({ invalid_type_error: 'Email must be a string' })
+          .email({ message: 'Invalid Email' })
+          .optional(),
+        createdAt: z
+          .string({ invalid_type_error: 'CreatedAt must be a string' })
+          .optional(),
+        updatedAt: z
+          .string({ invalid_type_error: 'UpdatedAt must be a string' })
+          .optional(),
         sort: z
           .enum(['name', 'createdAt', 'updatedAt'])
           .optional()
           .default('updatedAt'),
         order: z.enum(['asc', 'desc']).optional().default('desc'),
-        page: z.number().int().positive().optional().default(1),
-        size: z.number().int().positive().optional().default(5),
+        page: z.coerce.number().int().positive().optional().default(1),
+        size: z.coerce.number().int().positive().optional().default(5),
       })
       .strict();
 
