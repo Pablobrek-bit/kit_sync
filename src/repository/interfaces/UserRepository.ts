@@ -13,8 +13,9 @@ export interface UserRepository {
 
   index(data: {
     name?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    email?: string;
     sort: 'name' | 'createdAt' | 'updatedAt';
     order: 'asc' | 'desc';
     page: number;

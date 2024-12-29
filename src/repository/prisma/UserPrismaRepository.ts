@@ -44,8 +44,9 @@ export class UserPrismaRespository implements UserRepository {
 
   async index(data: {
     name?: string;
-    createdAt?: string;
-    updatedAt?: string;
+    createdAt?: Date;
+    updatedAt?: Date;
+    email?: string;
     sort: 'name' | 'createdAt' | 'updatedAt';
     order: 'asc' | 'desc';
     page: number;
@@ -60,15 +61,21 @@ export class UserPrismaRespository implements UserRepository {
       };
     }
 
+    if (data.email) {
+      where.email = {
+        contains: data.email,
+      };
+    }
+
     if (data.createdAt) {
       where.createdAt = {
-        contains: data.createdAt,
+        gte: data.createdAt,
       };
     }
 
     if (data.updatedAt) {
       where.updatedAt = {
-        contains: data.updatedAt,
+        gte: data.updatedAt,
       };
     }
 
