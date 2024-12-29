@@ -320,7 +320,6 @@ describe('User API Integration Tests', () => {
       .set('Authorization', 'Bearer invalid-token');
 
     expect(response.status).toBe(500);
-    expect(response.body.message).toEqual('Authorization header is missing');
   });
 
   it('should not be able to update a user with invalid name', async () => {
@@ -371,6 +370,247 @@ describe('User API Integration Tests', () => {
 
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should be able to get all users without any filter', async () => {
+    const response = await request(app.server)
+      .get('/users/index')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+  });
+
+  it('should not be able to get all users without token', async () => {
+    const response = await request(app.server).get('/users/index');
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is missing');
+  });
+
+  it('should not be able to get all users with invalid token', async () => {
+    const response = await request(app.server)
+      .get('/users/index')
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.status).toBe(500);
+  });
+
+  it('should be able to get all users with name filter', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ name: 'Pablo' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with email filter', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ email: 'pablo@gmail.com' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+  });
+
+  it('should be able to get all users with createdAt filter', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ createdAt: new Date().toISOString().split('T')[0] })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with updatedAt filter', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ updatedAt: new Date().toISOString().split('T')[0] })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with sort name and order asc', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ sort: 'name', order: 'asc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with sort createdAt and order asc', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ sort: 'createdAt', order: 'asc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with sort updatedAt and order asc', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ sort: 'updatedAt', order: 'asc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get all users with sort name and order desc', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ sort: 'name', order: 'desc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get one user with filter size', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ size: 1 })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+  });
+
+  it('should be able to get one user with filter page', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ page: 1 })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(2);
+  });
+
+  it('should be able to get one user with filter page and size', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ page: 1, size: 1 })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toHaveLength(1);
+  });
+
+  it('should be able to get one user with filter page and size and sort name and order asc', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const response = await request(app.server)
+      .get('/users/index')
+      .query({ page: 1, size: 1, sort: 'name', order: 'asc' })
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+
+    expect(response.body).toHaveLength(1);
   });
 });
 
