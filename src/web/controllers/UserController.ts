@@ -138,8 +138,18 @@ export class UserController {
           .optional()
           .default('updatedAt'),
         order: z.enum(['asc', 'desc']).optional().default('desc'),
-        page: z.coerce.number().int().positive().optional().default(1),
-        size: z.coerce.number().int().positive().optional().default(5),
+        page: z.coerce
+          .number({ invalid_type_error: 'Page must be a number' })
+          .int({ message: 'Page must be an integer' })
+          .positive({ message: 'Page must be greater than 0' })
+          .optional()
+          .default(1),
+        size: z.coerce
+          .number({ invalid_type_error: 'Size must be a number' })
+          .int({ message: 'Size must be an integer' })
+          .positive({ message: 'Size must be greater than 0' })
+          .optional()
+          .default(5),
       })
       .strict();
 

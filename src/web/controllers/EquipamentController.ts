@@ -9,16 +9,18 @@ import { z } from 'zod';
 
 export class EquipamentController {
   async create(request: FastifyRequest, reply: FastifyReply) {
-    const schema = z.object({
-      name: z.string({ required_error: 'Name is required' }),
-      description: z.string({ required_error: 'Description is required' }),
-      category: z.string({ required_error: 'Category is required' }),
-      dailyPrice: z.coerce
-        .number({ required_error: 'Daily price is required' })
-        .positive({ message: 'Daily price must be positive' }),
-      available: z.boolean().optional(),
-      photos: z.array(z.string()).optional(),
-    });
+    const schema = z
+      .object({
+        name: z.string({ required_error: 'Name is required' }),
+        description: z.string({ required_error: 'Description is required' }),
+        category: z.string({ required_error: 'Category is required' }),
+        dailyPrice: z
+          .number({ required_error: 'Daily price is required' })
+          .positive({ message: 'Daily price must be positive' }),
+        available: z.boolean().optional(),
+        photos: z.array(z.string()).optional(),
+      })
+      .strict();
 
     const propertyId = request.user.sub;
 
@@ -41,6 +43,7 @@ export class EquipamentController {
     const schemaParams = z.object({
       equipamentId: z.string({
         required_error: 'EquipamentId is required',
+        invalid_type_error: 'EquipamentId must to be a string',
       }),
     });
 
@@ -58,6 +61,7 @@ export class EquipamentController {
     const schemaParams = z.object({
       equipamentId: z.string({
         required_error: 'EquipamentId is required',
+        invalid_type_error: 'EquipamentId must to be a string',
       }),
     });
 
@@ -79,6 +83,7 @@ export class EquipamentController {
     const schemaParams = z.object({
       equipamentId: z.string({
         required_error: 'EquipamentId is required',
+        invalid_type_error: 'EquipamentId must to be a string',
       }),
     });
 
@@ -110,7 +115,7 @@ export class EquipamentController {
       ...data,
     });
 
-    return reply.send({ equipment });
+    return reply.code(200).send({ equipment });
   }
 
   async index(request: FastifyRequest, reply: FastifyReply) {

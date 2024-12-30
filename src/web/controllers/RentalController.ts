@@ -140,11 +140,21 @@ export class RentalController {
         .number({ invalid_type_error: 'Total Max must to be a number' })
         .positive({ message: 'Total Max must to be positive' })
         .optional(),
-      startAt: z.string().optional(),
-      endAt: z.string().optional(),
-      createdAt: z.string().optional(),
-      updatedAt: z.string().optional(),
-      equipmentId: z.string().optional(),
+      startAt: z
+        .string({ invalid_type_error: 'StartAt must be a string' })
+        .optional(),
+      endAt: z
+        .string({ invalid_type_error: 'EndAt must be a string' })
+        .optional(),
+      createdAt: z
+        .string({ invalid_type_error: 'CreatedAt must be a string' })
+        .optional(),
+      updatedAt: z
+        .string({ invalid_type_error: 'UpdatedAt must be a string' })
+        .optional(),
+      equipmentId: z
+        .string({ invalid_type_error: 'EquipmentId must be a string' })
+        .optional(),
       page: z.coerce
         .number({ invalid_type_error: 'Page must to be type number' })
         .positive({ message: 'Page must to be positive' })
