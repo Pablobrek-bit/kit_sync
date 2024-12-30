@@ -51,4 +51,7 @@ jobs:
         run: npx prisma migrate dev --name init
 
       - name: Unit Tests
-        run: npm run test
+        run: npm run test:unit
+
+      - name: Integration Tests
+        run: npm run test:integration
