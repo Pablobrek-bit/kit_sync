@@ -32,7 +32,7 @@ export class UpdateEquipmentService {
     }
 
     if (equipment.propertyId !== userId) {
-      throw new Error('You are not the owner of this equipment');
+      throw new InvalidArgumentError('You are not the owner of this equipment');
     }
 
     const updatedEquipment = await this.equipmentRepository.update({

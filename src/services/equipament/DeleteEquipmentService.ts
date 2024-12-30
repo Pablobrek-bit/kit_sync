@@ -17,7 +17,9 @@ export class DeleteEquipmentService {
     }
 
     if (equipament.propertyId !== userId) {
-      throw new Error('You are not allowed to delete this equipament');
+      throw new InvalidArgumentError(
+        'You are not allowed to delete this equipament',
+      );
     }
 
     await this.equipmentRepository.delete(id);
