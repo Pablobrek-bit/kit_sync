@@ -7,10 +7,11 @@
     "dev": "tsx watch src/server.ts",
     "lint": "eslint .",
     "lint:fix": "eslint . --fix",
-    "test": "jest src/tests/unit",
+    "test:unit": "jest src/tests/unit",
     "setup-db": "docker-compose up -d site_kit_sync_test_db && timeout /t 5 && npx prisma migrate deploy --schema=./prisma/schema.test.prisma",
     "teardown-db": "docker-compose stop site_kit_sync_test_db && docker-compose rm -f site_kit_sync_test_db",
-    "test:integration": "pwsh -Command \"try { npm run setup-db; npx jest --testPathPattern='tests/integration/.*\\.spec\\.ts$' --runInBand } finally { npm run teardown-db }\""
+    "test:integration": "pwsh -Command \"try { npm run setup-db; npx jest --testPathPattern='tests/integration/.*\\.spec\\.ts$' --runInBand } finally { npm run teardown-db }\"",
+    "test": "npm run test:unit && npm run test:integration"
   },
   "keywords": [],
   "author": "",
