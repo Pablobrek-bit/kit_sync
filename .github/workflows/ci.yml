@@ -45,13 +45,22 @@ jobs:
       - name: Generate Prisma Client
         run: npx prisma generate
 
+      - name: Wait for Database
+        run: |
+          until pg_isready -h localhost -p 5432 -U postgres; do
+            echo "Waiting for database to be ready..."
+            sleep 3
+          done
+
       - name: Run Migrations
         env:
           DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test_db'
         run: npx prisma migrate dev --name init
 
-      - name: Unit Tests
+      - name: Run Unit Tests
         run: npm run test:unit
 
-      - name: Integration Tests
+      - name: Run Integration Tests
+        env:
+          DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test_db'
         run: npm run test:integration
