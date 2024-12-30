@@ -70,6 +70,6 @@ jobs:
           DATABASE_URL: 'postgresql://postgres:postgres@localhost:5432/test_db'
         run: |
           docker-compose up -d site_kit_sync_test_db
-          sleep 5 # Substituir pelo timeout usado
+          sleep 5
           npm run test:integration
           docker-compose down
