@@ -609,7 +609,6 @@ describe('User API Integration Tests', () => {
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(200);
-
     expect(response.body).toHaveLength(1);
   });
 });
