@@ -41,7 +41,9 @@ export class RentalController {
 
   async get(request: FastifyRequest, reply: FastifyReply) {
     const schemaParams = z.object({
-      id: z.string({ required_error: 'Rental ID is required' }),
+      id: z
+        .string({ required_error: 'Rental ID is required' })
+        .uuid({ message: 'Rental ID must be a valid UUID' }),
     });
 
     const { id: rentalId } = schemaParams.parse(request.params);
