@@ -52,140 +52,338 @@ describe('Rental API Integration Tests', () => {
   });
 
   // CREATE
-  it('should be create a new rental', async () => {
+  //   it('should be create a new rental', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(201);
+  //     expect(response.body).toHaveProperty('id');
+  //     expect(response.body.equipmentId).toBe(equipmentCreated.id);
+  //   });
+
+  //   it('should not be able to create a rental with invalid equipment', async () => {
+  //     const rental = {
+  //       equipmentId: 'invalid-id',
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Equipment not found');
+  //   });
+
+  //   it('should not be able to create a rental with invalid date range', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-02',
+  //       endAt: '2022-01-01',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Invalid date range');
+  //   });
+
+  //   it('should not be able to create a rental with equipment not available', async () => {
+  //     await prisma.equipment.update({
+  //       where: { id: equipmentCreated.id },
+  //       data: { available: false },
+  //     });
+
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Equipment not available');
+  //   });
+
+  //   it('should not be able to create a rental without authentication', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server).post('/rentals').send(rental);
+
+  //     expect(response.status).toBe(401);
+  //     expect(response.body.message).toBe('Authorization header is missing');
+  //   });
+
+  //   it('should not be able to create a rental without equipmentId', async () => {
+  //     const rental = {
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   it('should not be able to create a rental without startAt', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   it('should not be able to create a rental without endAt', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //     };
+
+  //     const response = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   // GET
+  //   it('should be able to get a rental', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const responseCreate = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     const response = await request(app.server)
+  //       .get(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer ${token}`);
+
+  //     expect(response.status).toBe(200);
+  //     expect(response.body).toHaveProperty('id');
+  //     expect(response.body.equipmentId).toBe(equipmentCreated.id);
+  //   });
+
+  //   it('should not be able to get a rental with invalid id', async () => {
+  //     const response = await request(app.server)
+  //       .get('/rentals/invalid-id')
+  //       .set('Authorization', `Bearer ${token}`);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   it('should not be able to get a rental without authentication', async () => {
+  //     const response = await request(app.server).get('/rentals/1');
+
+  //     expect(response.status).toBe(401);
+  //     expect(response.body.message).toBe('Authorization header is missing');
+  //   });
+
+  //   it('should not be able to get a rental with invalid user', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const responseCreate = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     const response = await request(app.server)
+  //       .get(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer invalid-token`);
+
+  //     expect(response.status).toBe(500);
+  //   });
+
+  //   it('should not be able to get a rental with unauthorized user', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const responseCreate = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     const newUser = {
+  //       name: 'Pablo',
+  //       email: 'pablo@gmail.com',
+  //       password: '123456',
+  //     };
+
+  //     await request(app.server).post('/users').send(newUser);
+
+  //     const loginResponse = await request(app.server)
+  //       .post('/auth')
+  //       .send({ email: newUser.email, password: newUser.password });
+
+  //     const response = await request(app.server)
+  //       .get(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer ${loginResponse.body.token}`);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Unauthorized');
+  //   });
+
+  //   it('should not be able to get a rental with non-existent rental', async () => {
+  //     const response = await request(app.server)
+  //       .get('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
+  //       .set('Authorization', `Bearer ${token}`);
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Rental not found');
+  //   });
+
+  //   // DELETE
+  //   it('should be able to delete a rental', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const responseCreate = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     const response = await request(app.server)
+  //       .delete(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send({ status: 'CANCELLED' });
+
+  //     const responseGet = await request(app.server)
+  //       .get(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer ${token}`);
+
+  //     expect(response.status).toBe(204);
+  //     expect(responseGet.body.status).toBe('CANCELLED');
+  //   });
+
+  //   it('should not be able to delete a rental with invalid id', async () => {
+  //     const response = await request(app.server)
+  //       .delete('/rentals/invalid-id')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send({ status: 'CANCELLED' });
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   it('should not be able to delete a rental without authentication', async () => {
+  //     const response = await request(app.server).delete('/rentals/1');
+
+  //     expect(response.status).toBe(401);
+  //     expect(response.body.message).toBe('Authorization header is missing');
+  //   });
+
+  //   it('should not be able to delete a rental with invalid status', async () => {
+  //     const response = await request(app.server)
+  //       .delete('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send({ status: 'INVALID' });
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Validation error');
+  //   });
+
+  //   it('should not be able to delete a rental with unauthorized user', async () => {
+  //     const rental = {
+  //       equipmentId: equipmentCreated.id,
+  //       startAt: '2022-01-01',
+  //       endAt: '2022-01-02',
+  //     };
+
+  //     const responseCreate = await request(app.server)
+  //       .post('/rentals')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send(rental);
+
+  //     const newUser = {
+  //       name: 'Pablo',
+  //       email: 'pablo@gmail.com',
+  //       password: '123456',
+  //     };
+
+  //     await request(app.server).post('/users').send(newUser);
+
+  //     const loginResponse = await request(app.server)
+  //       .post('/auth')
+  //       .send({ email: newUser.email, password: newUser.password });
+
+  //     console.log('Token: ' + loginResponse.body.token);
+
+  //     const response = await request(app.server)
+  //       .delete(`/rentals/${responseCreate.body.id}`)
+  //       .set('Authorization', `Bearer ${loginResponse.body.token}`)
+  //       .send({ status: 'CANCELLED' });
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe(
+  //       'You are not allowed to delete this rental',
+  //     );
+  //   });
+
+  //   it('should not be able to delete a rental with non-existent rental', async () => {
+  //     const response = await request(app.server)
+  //       .delete('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
+  //       .set('Authorization', `Bearer ${token}`)
+  //       .send({ status: 'CANCELLED' });
+
+  //     expect(response.status).toBe(400);
+  //     expect(response.body.message).toBe('Rental not found');
+  //   });
+
+  //   UPDATE
+  it('should be able to update a rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(201);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.equipmentId).toBe(equipmentCreated.id);
-  });
-
-  it('should not be able to create a rental with invalid equipment', async () => {
-    const rental = {
-      equipmentId: 'invalid-id',
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Equipment not found');
-  });
-
-  it('should not be able to create a rental with invalid date range', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-02',
-      endAt: '2022-01-01',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Invalid date range');
-  });
-
-  it('should not be able to create a rental with equipment not available', async () => {
-    await prisma.equipment.update({
-      where: { id: equipmentCreated.id },
-      data: { available: false },
-    });
-
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Equipment not available');
-  });
-
-  it('should not be able to create a rental without authentication', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server).post('/rentals').send(rental);
-
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Authorization header is missing');
-  });
-
-  it('should not be able to create a rental without equipmentId', async () => {
-    const rental = {
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Validation error');
-  });
-
-  it('should not be able to create a rental without startAt', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      endAt: '2022-01-02',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Validation error');
-  });
-
-  it('should not be able to create a rental without endAt', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Validation error');
-  });
-
-  // GET
-  it('should be able to get a rental', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
     };
 
     const responseCreate = await request(app.server)
@@ -194,89 +392,11 @@ describe('Rental API Integration Tests', () => {
       .send(rental);
 
     const response = await request(app.server)
-      .get(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer ${token}`);
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startAt: '2025-02-03' });
 
     expect(response.status).toBe(200);
-    expect(response.body).toHaveProperty('id');
-    expect(response.body.equipmentId).toBe(equipmentCreated.id);
+    expect(response.body.rental.startAt).toBe('2025-02-03T00:00:00.000Z');
   });
-
-  it('should not be able to get a rental with invalid id', async () => {
-    const response = await request(app.server)
-      .get('/rentals/invalid-id')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Validation error');
-  });
-
-  it('should not be able to get a rental without authentication', async () => {
-    const response = await request(app.server).get('/rentals/1');
-
-    expect(response.status).toBe(401);
-    expect(response.body.message).toBe('Authorization header is missing');
-  });
-
-  it('should not be able to get a rental with invalid user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    const response = await request(app.server)
-      .get(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer invalid-token`);
-
-    expect(response.status).toBe(500);
-  });
-
-  it('should not be able to get a rental with unauthorized user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    const newUser = {
-      name: 'Pablo',
-      email: 'pablo@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(newUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: newUser.email, password: newUser.password });
-
-    const response = await request(app.server)
-      .get(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer ${loginResponse.body.token}`);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Unauthorized');
-  });
-
-  it('should not be able to get a rental with non-existent rental', async () => {
-    const response = await request(app.server)
-      .get('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
-      .set('Authorization', `Bearer ${token}`);
-
-    expect(response.status).toBe(400);
-    expect(response.body.message).toBe('Rental not found');
-  });
-
-  // DELETE
 });

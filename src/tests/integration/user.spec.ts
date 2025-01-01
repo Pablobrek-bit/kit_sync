@@ -258,42 +258,6 @@ describe('User API Integration Tests', () => {
     expect(response.body.message).toEqual('Unauthorized');
   });
 
-  // it('should not be able to delete a user with invalid token', async () => {
-  //   const newUser = {
-  //     name: 'Pablo',
-  //     email: 'pablo@gmail.com',
-  //     password: '123456',
-  //   };
-
-  //   const responseCreate = await request(app.server)
-  //     .post('/users')
-  //     .send(newUser);
-
-  //   const response = await request(app.server)
-  //     .delete(`/users/${responseCreate.body.user.id}`)
-  //     .set('Authorization', `Bearer invalid-token`);
-
-  //   expect(response.status).toBe(500);
-  // });
-
-  // it('should be able to delete a user if the user be admin', async () => {
-  //   const newUser = {
-  //     name: 'Pablo',
-  //     email: 'pablo@gmail.com',
-  //     password: '123456',
-  //   };
-
-  //   const responseCreate = await request(app.server)
-  //     .post('/users')
-  //     .send(newUser);
-
-  //   const response = await request(app.server)
-  //     .delete(`/users/${responseCreate.body.user.id}`)
-  //     .set('Authorization', `Bearer invalid-token`);
-
-  //   expect(response.status).toBe(500);
-  // });
-
   it('should be able to update a user', async () => {
     const response = await request(app.server)
       .put('/users')
