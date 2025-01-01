@@ -1,5 +1,6 @@
 import type { Rental } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface GetRentalServiceRequest {
   rentalId: string;
@@ -20,11 +21,11 @@ export class GetRentalService {
     const rental = await this.rentalRepository.findById(rentalId);
 
     if (!rental) {
-      throw new Error('Rental not found');
+      throw new InvalidArgumentError('Rental not found');
     }
 
     if (rental.renterId !== userId) {
-      throw new Error('Unauthorized');
+      throw new InvalidArgumentError('Unauthorized');
     }
 
     return { rental };
