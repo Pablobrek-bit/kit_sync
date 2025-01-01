@@ -63,14 +63,16 @@ export class RentalController {
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const schema = z.object({
-      status: z.nativeEnum(RentalStatus, {
+      status: z.enum(['FINISHED', 'CANCELLED'], {
         invalid_type_error: 'Status must be a valid',
         required_error: 'Status is required',
       }),
     });
 
     const schemaParams = z.object({
-      id: z.string({ required_error: 'Rental ID is required' }),
+      id: z.string({ required_error: 'Rental ID is required' }).uuid({
+        message: 'Rental ID must be a valid UUID',
+      }),
     });
 
     const { id: rentalId } = schemaParams.parse(request.params);
