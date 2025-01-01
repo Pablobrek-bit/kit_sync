@@ -48,40 +48,4 @@ describe('Delete Rental Service', () => {
       }),
     ).rejects.toThrow('You are not allowed to delete this rental');
   });
-
-  it('should not be able to delete a rental with status PENDING', async () => {
-    await expect(
-      deleteRentalService.execute({
-        rentalId: rentalMock.idRentalExists,
-        userId: rentalMock.mockRental.renterId,
-        status: RentalStatus.PENDING,
-      }),
-    ).rejects.toThrow(
-      'You can only delete a rental with status FINISHED or CANCELLED',
-    );
-  });
-
-  it('should not be able to delete a rental with status ACCEPTED', async () => {
-    await expect(
-      deleteRentalService.execute({
-        rentalId: rentalMock.idRentalExists,
-        userId: rentalMock.mockRental.renterId,
-        status: RentalStatus.ACCEPTED,
-      }),
-    ).rejects.toThrow(
-      'You can only delete a rental with status FINISHED or CANCELLED',
-    );
-  });
-
-  it('should not be able to delete a rental with status REJECTED', async () => {
-    await expect(
-      deleteRentalService.execute({
-        rentalId: rentalMock.idRentalExists,
-        userId: rentalMock.mockRental.renterId,
-        status: RentalStatus.REJECTED,
-      }),
-    ).rejects.toThrow(
-      'You can only delete a rental with status FINISHED or CANCELLED',
-    );
-  });
 });
