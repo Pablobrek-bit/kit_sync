@@ -1,5 +1,6 @@
 import { RentalStatus } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface DeleteRentalServiceRequest {
   rentalId: string;
@@ -14,16 +15,12 @@ export class DeleteRentalService {
     const rental = await this.rentalRepository.findById(rentalId);
 
     if (!rental) {
-      throw new Error('Rental not found');
+      throw new InvalidArgumentError('Rental not found');
     }
 
     if (rental.renterId !== userId) {
-      throw new Error('You are not allowed to delete this rental');
-    }
-
-    if (status != RentalStatus.FINISHED && status != RentalStatus.CANCELLED) {
-      throw new Error(
-        'You can only delete a rental with status FINISHED or CANCELLED',
+      throw new InvalidArgumentError(
+        'You are not allowed to delete this rental',
       );
     }
 

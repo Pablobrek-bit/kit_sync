@@ -39,6 +39,12 @@ export class CreateRentalService {
     const startDate = new Date(startAt);
     const endDate = new Date(endAt);
 
+    if (startDate < new Date()) {
+      throw new InvalidArgumentError(
+        'Start date must be greater than the current date',
+      );
+    }
+
     if (startDate >= endDate) {
       throw new InvalidArgumentError('Invalid date range');
     }

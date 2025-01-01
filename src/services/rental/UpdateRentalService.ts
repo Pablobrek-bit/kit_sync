@@ -1,5 +1,6 @@
 import type { Rental, RentalStatus } from '@prisma/client';
 import type { RentalRepository } from 'repository/interfaces/RentalRepository';
+import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface UpdateRentalServiceRequest {
   rentalId: string;
@@ -45,11 +46,15 @@ export class UpdateRentalService {
       const now = normalizeDate(new Date());
 
       if (startAtDate < now) {
-        throw new Error('Start date must be greater than the current date');
+        throw new InvalidArgumentError(
+          'Start date must be greater than the current date',
+        );
       }
 
       if (startAtDate > endAtDate) {
-        throw new Error('Start date must be less than the end date');
+        throw new InvalidArgumentError(
+          'Start date must be less than the end date',
+        );
       }
 
       rental.startAt = startAtDate;
@@ -62,14 +67,18 @@ export class UpdateRentalService {
       const now = normalizeDate(new Date());
 
       if (startAtDate < now) {
-        throw new Error('Start date must be greater than the current date');
+        throw new InvalidArgumentError(
+          'Start date must be greater than the current date',
+        );
       }
 
       if (rental.endAt) {
         const endAtDate = normalizeDate(new Date(rental.endAt));
 
         if (startAtDate > endAtDate) {
-          throw new Error('Start date must be less than the end date');
+          throw new InvalidArgumentError(
+            'Start date must be less than the end date',
+          );
         }
       }
 
@@ -81,15 +90,18 @@ export class UpdateRentalService {
       const now = normalizeDate(new Date());
 
       if (endAtDate < now) {
-        throw new Error('End date must be greater than the current date');
+        throw new InvalidArgumentError(
+          'End date must be greater than the current date',
+        );
       }
 
       if (rental.startAt) {
         const startAtDate = normalizeDate(new Date(rental.startAt));
-        console.log('StartAtDate:', startAtDate);
 
         if (endAtDate < startAtDate) {
-          throw new Error('End date must be greater than the start date');
+          throw new InvalidArgumentError(
+            'End date must be greater than the start date',
+          );
         }
       }
 
@@ -98,8 +110,8 @@ export class UpdateRentalService {
 
     const newRental = await this.rentalRepository.update({
       id: rentalId,
-      endAt,
-      startAt,
+      endAt: rental.endAt,
+      startAt: rental.startAt,
       status,
     });
 
