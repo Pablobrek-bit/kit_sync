@@ -107,7 +107,9 @@ export class RentalController {
     });
 
     const schemaParams = z.object({
-      id: z.string({ required_error: 'Rental ID is required' }),
+      id: z.string({ required_error: 'Rental ID is required' }).uuid({
+        message: 'Rental ID must be a valid UUID',
+      }),
     });
 
     const { id: rentalId } = schemaParams.parse(request.params);
@@ -158,6 +160,9 @@ export class RentalController {
         .optional(),
       equipmentId: z
         .string({ invalid_type_error: 'EquipmentId must be a string' })
+        .uuid({
+          message: 'EquipmentId must be a valid UUID',
+        })
         .optional(),
       page: z.coerce
         .number({ invalid_type_error: 'Page must to be type number' })
