@@ -27,11 +27,13 @@ export class UpdateRentalService {
     const rental = await this.rentalRepository.findById(rentalId);
 
     if (!rental) {
-      throw new Error('Rental not found');
+      throw new InvalidArgumentError('Rental not found');
     }
 
     if (rental.renterId !== userId) {
-      throw new Error('You are not allowed to update this rental');
+      throw new InvalidArgumentError(
+        'You are not allowed to update this rental',
+      );
     }
 
     const normalizeDate = (date: Date) => {
