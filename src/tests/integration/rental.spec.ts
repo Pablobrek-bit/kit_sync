@@ -55,8 +55,8 @@ describe('Rental API Integration Tests', () => {
   it('should be create a new rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server)
@@ -72,8 +72,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental with invalid equipment', async () => {
     const rental = {
       equipmentId: 'invalid-id',
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server)
@@ -88,8 +88,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental with invalid date range', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-02',
-      endAt: '2022-01-01',
+      startAt: '2025-11-02',
+      endAt: '2025-11-01',
     };
 
     const response = await request(app.server)
@@ -109,8 +109,8 @@ describe('Rental API Integration Tests', () => {
 
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server)
@@ -125,8 +125,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental without authentication', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server).post('/rentals').send(rental);
@@ -137,8 +137,8 @@ describe('Rental API Integration Tests', () => {
 
   it('should not be able to create a rental without equipmentId', async () => {
     const rental = {
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server)
@@ -153,7 +153,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental without startAt', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      endAt: '2022-01-02',
+      endAt: '2025-11-02',
     };
 
     const response = await request(app.server)
@@ -168,7 +168,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental without endAt', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
+      startAt: '2025-11-01',
     };
 
     const response = await request(app.server)
@@ -184,8 +184,8 @@ describe('Rental API Integration Tests', () => {
   it('should be able to get a rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const responseCreate = await request(app.server)
@@ -221,8 +221,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to get a rental with invalid user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const responseCreate = await request(app.server)
@@ -240,8 +240,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to get a rental with unauthorized user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const responseCreate = await request(app.server)
@@ -282,8 +282,8 @@ describe('Rental API Integration Tests', () => {
   it('should be able to delete a rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const responseCreate = await request(app.server)
@@ -334,8 +334,8 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to delete a rental with unauthorized user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
-      startAt: '2022-01-01',
-      endAt: '2022-01-02',
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
     };
 
     const responseCreate = await request(app.server)
@@ -356,6 +356,8 @@ describe('Rental API Integration Tests', () => {
       .send({ email: newUser.email, password: newUser.password });
 
     console.log('Token: ' + loginResponse.body.token);
+
+    console.log(responseCreate.body);
 
     const response = await request(app.server)
       .delete(`/rentals/${responseCreate.body.id}`)
@@ -399,4 +401,628 @@ describe('Rental API Integration Tests', () => {
     expect(response.status).toBe(200);
     expect(response.body.rental.startAt).toBe('2025-02-03T00:00:00.000Z');
   });
+
+  it('should not be able to update a rental with invalid id', async () => {
+    const response = await request(app.server)
+      .put('/rentals/invalid-id')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startAt: '2025-02-03' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to update a rental without authentication', async () => {
+    const response = await request(app.server).put(
+      '/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b',
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to update a rental with unauthorized user', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    await request(app.server).post('/users').send(newUser);
+
+    const loginResponse = await request(app.server)
+      .post('/auth')
+      .send({ email: newUser.email, password: newUser.password });
+
+    const response = await request(app.server)
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${loginResponse.body.token}`)
+      .send({ startAt: '2025-02-03' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      'You are not allowed to update this rental',
+    );
+  });
+
+  it('should not be able to update a rental with non-existent rental', async () => {
+    const response = await request(app.server)
+      .put('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startAt: '2025-02-03' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Rental not found');
+  });
+
+  it('should not be able to update a rental with invalid date range', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const response = await request(app.server)
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startAt: '2025-02-05' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      'Start date must be less than the end date',
+    );
+  });
+
+  it('should not be able to update a rental with invalid start date', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const response = await request(app.server)
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ startAt: '2025-01-01' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      'Start date must be greater than the current date',
+    );
+  });
+
+  it('should not be able to update a rental with invalid status', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const response = await request(app.server)
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'INVALID' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to update a rental with invalid end date', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-02-01',
+      endAt: '2025-02-04',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const response = await request(app.server)
+      .put(`/rentals/${responseCreate.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ endAt: '2025-01-01' });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe(
+      'End date must be greater than the current date',
+    );
+  });
+
+  // INDEX;
+  it('should be able to list all rentals', async () => {
+    const rental = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    const response = await request(app.server)
+      .get('/rentals')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(1);
+  });
+
+  it('should not be able to list all rentals without authentication', async () => {
+    const response = await request(app.server).get('/rentals');
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to list all rentals with invalid token', async () => {
+    const response = await request(app.server)
+      .get('/rentals')
+      .set('Authorization', `Bearer invalid-token`);
+
+    expect(response.status).toBe(500);
+  });
+
+  it('should be able to list all rentals by equipment', async () => {
+    const rental1 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental2 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-12-01',
+      endAt: '2025-12-02',
+    };
+
+    const rental3 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2026-12-01',
+      endAt: '2026-12-02',
+    };
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental1);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental2);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental3);
+
+    const response = await request(app.server)
+      .get(`/rentals?equipmentId=${equipmentCreated.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(3);
+  });
+
+  it('should be able to list all rentals by status', async () => {
+    const rental1 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental2 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental3 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const response1 = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental1);
+
+    await request(app.server)
+      .put(`/rentals/${response1.body.id}`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ status: 'ACCEPTED' });
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental2);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental3);
+
+    const response = await request(app.server)
+      .get('/rentals?status=ACCEPTED')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(1);
+  });
+
+  it('should be able to list all rentals by totalMin', async () => {
+    const rental1 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental2 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-03',
+    };
+
+    const rental3 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-04',
+    };
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental1);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental2);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental3);
+
+    const response = await request(app.server)
+      .get('/rentals?totalMin=200')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(2);
+  });
+
+  it('should be able to list all rentals by totalMin', async () => {
+    const rental1 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental2 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-03',
+    };
+
+    const rental3 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-04',
+    };
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental1);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental2);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental3);
+
+    const response = await request(app.server)
+      .get('/rentals?totalMin=150')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(2);
+  });
+
+  it('should be able to list all rentals by page', async () => {
+    const rental1 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-11-01',
+      endAt: '2025-11-02',
+    };
+
+    const rental2 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2025-12-01',
+      endAt: '2025-12-02',
+    };
+
+    const rental3 = {
+      equipmentId: equipmentCreated.id,
+      startAt: '2026-12-01',
+      endAt: '2026-12-02',
+    };
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental1);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental2);
+
+    await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental3);
+
+    const response = await request(app.server)
+      .get('/rentals?page=1&size=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.length).toBe(1);
+  });
+
+  it('should not be able to list all rentals with invalid page', async () => {
+    const response = await request(app.server)
+      .get('/rentals?page=invalid&size=1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list all rentals with invalid size', async () => {
+    const response = await request(app.server)
+      .get('/rentals?page=1&size=invalid')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list all rentals with invalid status', async () => {
+    const response = await request(app.server)
+      .get('/rentals?status=INVALID')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list all rentals with invalid totalMin', async () => {
+    const response = await request(app.server)
+      .get('/rentals?totalMin=invalid')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list all rentals with invalid totalMax', async () => {
+    const response = await request(app.server)
+      .get('/rentals?totalMax=invalid')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list all rentals with invalid equipmentId', async () => {
+    const response = await request(app.server)
+      .get('/rentals?equipmentId=invalid')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  // TESTAR COM O NOVO PC
+  // it('should be able to list all rentals by startAt', async () => {
+  //   const rental1 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-11-01',
+  //     endAt: '2025-11-02',
+  //   };
+
+  //   const rental2 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-12-01',
+  //     endAt: '2025-12-02',
+  //   };
+
+  //   const rental3 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2026-12-01',
+  //     endAt: '2026-12-02',
+  //   };
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental1);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental2);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental3);
+
+  //   const response = await request(app.server)
+  //     .get('/rentals?startAt=2025-11-01')
+  //     .set('Authorization', `Bearer ${token}`);
+
+  //   expect(response.status).toBe(200);
+  //   expect(response.body.length).toBe(1);
+  // });
+
+  // it('should be able to list all rentals by endAt', async () => {
+  //   const rental1 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-11-01',
+  //     endAt: '2025-11-02',
+  //   };
+
+  //   const rental2 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-12-01',
+  //     endAt: '2025-12-02',
+  //   };
+
+  //   const rental3 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2026-12-01',
+  //     endAt: '2026-12-02',
+  //   };
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental1);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental2);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental3);
+
+  //   const response = await request(app.server)
+  //     .get('/rentals?endAt=2025-11-02')
+  //     .set('Authorization', `Bearer ${token}`);
+
+  //   expect(response.status).toBe(200);
+  //   expect(response.body.length).toBe(1);
+  // });
+
+  // it('should be able to list all rentals by createdAt', async () => {
+  //   const rental1 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-11-01',
+  //     endAt: '2025-11-02',
+  //   };
+
+  //   const rental2 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-12-01',
+  //     endAt: '2025-12-02',
+  //   };
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental1);
+
+  //   jest.useFakeTimers().setSystemTime(new Date('2025-12-01').getTime());
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental2);
+
+  //   jest.useRealTimers();
+
+  //   const response = await request(app.server)
+  //     .get('/rentals?createdAt=2025-12-01')
+  //     .set('Authorization', `Bearer ${token}`);
+
+  //   expect(response.status).toBe(200);
+  //   expect(response.body.length).toBe(1);
+  // });
+
+  // it('should be able to list all rentals by updatedAt', async () => {
+  //   const rental1 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-11-01',
+  //     endAt: '2025-11-02',
+  //   };
+
+  //   const rental2 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2025-12-01',
+  //     endAt: '2025-12-02',
+  //   };
+
+  //   const rental3 = {
+  //     equipmentId: equipmentCreated.id,
+  //     startAt: '2026-12-01',
+  //     endAt: '2026-12-02',
+  //   };
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental1);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental2);
+
+  //   await request(app.server)
+  //     .post('/rentals')
+  //     .set('Authorization', `Bearer ${token}`)
+  //     .send(rental3);
+
+  //   const dataUpdateAt = new Date().toISOString().split('T')[0];
+
+  //   const response = await request(app.server)
+  //     .get(`/rentals?updatedAt=${dataUpdateAt}`)
+  //     .set('Authorization', `Bearer ${token}`);
+
+  //   expect(response.status).toBe(200);
+  //   expect(response.body.length).toBe(3);
+  // });
+
+  //=============================================================
 });
