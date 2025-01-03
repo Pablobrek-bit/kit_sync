@@ -1,9 +1,12 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
 
-export function verifyAdmin(request: FastifyRequest, reply: FastifyReply) {
+export async function verifyAdmin(
+  request: FastifyRequest,
+  reply: FastifyReply,
+) {
   const { role } = request.user;
 
-  if (role !== 'admin') {
+  if (role !== 'ADMIN') {
     reply.status(401).send({ message: 'Unauthorized' });
   }
 
