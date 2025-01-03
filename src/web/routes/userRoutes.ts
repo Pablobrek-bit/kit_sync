@@ -14,5 +14,9 @@ export async function userRoutes(app: FastifyInstance) {
     { preHandler: [ensureAuthenticated, verifyAdmin] },
     userController.delete,
   );
-  app.get('/index', { preHandler: ensureAuthenticated }, userController.index);
+  app.get(
+    '/index',
+    { preHandler: [ensureAuthenticated, verifyAdmin] },
+    userController.index,
+  );
 }
