@@ -11,13 +11,24 @@ import { z } from 'zod';
 export class UserController {
   async create(request: FastifyRequest, reply: FastifyReply) {
     const requestSchema = z.object({
-      name: z.string({ required_error: 'Name is required' }),
-      email: z
-        .string({ required_error: 'Email is required' })
-        .email({ message: 'Invalid email' }),
-      password: z.string({ required_error: 'Password is required' }).min(6, {
-        message: 'Password must have at least 6 characters',
+      name: z.string({
+        required_error: 'Name is required',
+        invalid_type_error: 'Name must be a string',
       }),
+      email: z
+        .string({
+          required_error: 'Email is required',
+          invalid_type_error: 'Email must be a string',
+        })
+        .email({ message: 'Invalid email' }),
+      password: z
+        .string({
+          required_error: 'Password is required',
+          invalid_type_error: 'Password must be a string',
+        })
+        .min(6, {
+          message: 'Password must have at least 6 characters',
+        }),
     });
 
     const data = requestSchema.parse(request.body);
