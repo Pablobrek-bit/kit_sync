@@ -1,13 +1,15 @@
 import { prisma } from 'lib/prisma';
 import { app } from '../../app';
 import request from 'supertest';
+import { Role } from '@prisma/client';
 
 describe('User API Integration Tests', () => {
   let token: string;
   const user = {
     name: 'Pablo',
     email: 'pabloTest@gmail.com',
-    password: '123456',
+    password: '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
+    role: Role.ADMIN,
   };
 
   beforeAll(async () => {
@@ -16,20 +18,31 @@ describe('User API Integration Tests', () => {
 
   afterAll(async () => {
     await app.close();
+    await prisma.$disconnect();
   });
 
   beforeEach(async () => {
-    await prisma.user.deleteMany();
-
-    await request(app.server).post('/users').send(user);
+    await prisma.user.create({
+      data: {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        role: user.role,
+      },
+    });
 
     const loginResponse = await request(app.server)
       .post('/auth')
-      .send({ email: user.email, password: user.password });
+      .send({ email: user.email, password: '123456' });
 
     token = loginResponse.body.token;
   });
 
+  afterEach(async () => {
+    await prisma.user.deleteMany();
+  });
+
+  // CREATE
   it('should be able to create a new user', async () => {
     const newUser = {
       name: 'Pablo',
@@ -84,6 +97,56 @@ describe('User API Integration Tests', () => {
     expect(response.body.message).toEqual('Validation error');
   });
 
+  it('should not be able to create a new user with invalid name', async () => {
+    const newUser = {
+      name: 1,
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to create a new user without name', async () => {
+    const newUser = {
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to create a new user without email', async () => {
+    const newUser = {
+      name: 'Pablo',
+      password: '123456',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to create a new user without password', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+    };
+
+    const response = await request(app.server).post('/users').send(newUser);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  // LOGIN
   it('should be able to login', async () => {
     const newUser = {
       name: 'Pablo',
@@ -172,6 +235,42 @@ describe('User API Integration Tests', () => {
     expect(response.status).toBe(400);
   });
 
+  it('should not be able to login with invalid email and password', async () => {
+    const response = await request(app.server).post('/auth').send({
+      email: 'invalid email',
+      password: '123',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to login without email', async () => {
+    const response = await request(app.server).post('/auth').send({
+      password: '123456',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to login without password', async () => {
+    const response = await request(app.server).post('/auth').send({
+      email: 'pablo@gmail.com',
+    });
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to login without email and password', async () => {
+    const response = await request(app.server).post('/auth').send({});
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  // GET
   it('should be able to get user profile', async () => {
     const newUser = {
       name: 'Pablo',
@@ -231,14 +330,20 @@ describe('User API Integration Tests', () => {
       .post('/users')
       .send(newUser);
 
+    const responseAuth = await request(app.server).post('/auth').send({
+      email: newUser.email,
+      password: newUser.password,
+    });
+
     const response = await request(app.server)
       .delete(`/users/${responseCreate.body.user.id}`)
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${responseAuth.body.token}`);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toEqual('Unauthorized');
   });
 
+  // DELETE
   it('should not be able to delete a user without token', async () => {
     const newUser = {
       name: 'Pablo',
@@ -250,12 +355,12 @@ describe('User API Integration Tests', () => {
       .post('/users')
       .send(newUser);
 
-    const response = await request(app.server)
-      .delete(`/users/${responseCreate.body.user.id}`)
-      .set('Authorization', `Bearer ${token}`);
+    const response = await request(app.server).delete(
+      `/users/${responseCreate.body.user.id}`,
+    );
 
     expect(response.status).toBe(401);
-    expect(response.body.message).toEqual('Unauthorized');
+    expect(response.body.message).toEqual('Authorization header is missing');
   });
 
   it('should be able to update a user', async () => {
@@ -268,6 +373,7 @@ describe('User API Integration Tests', () => {
     expect(response.body.name).toEqual('Pablo Henrique');
   });
 
+  // UPDATE
   it('should not be able to update a user without token', async () => {
     const response = await request(app.server)
       .put('/users')
@@ -336,7 +442,13 @@ describe('User API Integration Tests', () => {
     expect(response.body.message).toEqual('Validation error');
   });
 
+  // INDEX
   it('should be able to get all users without any filter', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const response = await request(app.server)
       .get('/users/index')
       .set('Authorization', `Bearer ${token}`);
@@ -346,6 +458,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to get all users without token', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const response = await request(app.server).get('/users/index');
 
     expect(response.status).toBe(401);
@@ -353,6 +470,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to get all users with invalid token', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const response = await request(app.server)
       .get('/users/index')
       .set('Authorization', 'Bearer invalid-token');
@@ -361,6 +483,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with name filter', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -379,6 +506,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with email filter', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -397,6 +529,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with createdAt filter', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -415,6 +552,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with updatedAt filter', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -433,6 +575,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with sort name and order asc', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -451,6 +598,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with sort createdAt and order asc', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -469,6 +621,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with sort updatedAt and order asc', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -487,6 +644,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get all users with sort name and order desc', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -505,6 +667,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get one user with filter size', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -523,6 +690,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get one user with filter page', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
@@ -541,6 +713,11 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to get one user with filter page and size', async () => {
+    await prisma.user.update({
+      where: { email: user.email },
+      data: { role: 'ADMIN' },
+    });
+
     const newUser = {
       name: 'Pablo',
       email: 'pablo@gmail.com',
