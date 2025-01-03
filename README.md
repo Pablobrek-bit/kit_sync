@@ -1,43 +1,87 @@
-Usuários:
+- Authentication:
 
-POST /users: Criar um novo usuário. x
+POST /auth/register: Register a new user.(x)
 
-GET /users/{userId}: Obter informações de um usuário específico. x
+POST /auth/login: User login (returns JWT). (x)
 
-PUT /users/{userId}: Atualizar informações de um usuário. x
+GET /auth/me: Get current user's profile (protected route). (x)
 
-DELETE /users/{userId}: Deletar um usuário (com as devidas precauções e verificações). x
+PUT /auth/me: Update current user's profile (protected route). (x)
 
-Equipamentos:
+- Users (Admin Only):
 
-POST /equipment: Cadastrar um novo equipamento.
+GET /users: Get all users (admin only). (x)
 
-GET /equipment/{equipmentId}: Obter informações de um equipamento específico.
+GET /users/{userId}: Get a specific user by ID (admin only).
 
-PUT /equipment/{equipmentId}: Atualizar informações de um equipamento.
+DELETE /users/{userId}: Delete a user (admin only). Consider soft delete instead of hard delete.
 
-DELETE /equipment/{equipmentId}: Deletar um equipamento.
+- Equipment (Owners and Admin):
 
-GET /equipment/search: Buscar equipamentos com filtros (tipo, localização, preço, disponibilidade, etc.).
+POST /equipment: Create new equipment (owner, admin).
 
-Solicitações de Aluguel:
+GET /equipment: Get all equipment (public, with filtering options).
 
-POST /rentals: Criar uma nova solicitação de aluguel.
+GET /equipment/{equipmentId}: Get specific equipment by ID (public).
 
-GET /rentals/{rentalId}: Obter informações de uma solicitação específica.
+PUT /equipment/{equipmentId}: Update equipment (owner, admin).
 
-PUT /rentals/{rentalId}: Atualizar o status de uma solicitação (aprovada, rejeitada, etc.).
+DELETE /equipment/{equipmentId}: Delete equipment (owner, admin). Consider soft delete.
 
-GET /rentals/user/{userId}: Listar solicitações de um usuário específico (como locatário ou locador).
+POST /equipment/{equipmentId}/photos: Upload photos for equipment (owner, admin).
 
-Mensagens:
+DELETE /equipment/{equipmentId}/photos/{photoId}: Delete a photo from equipment (owner, admin).
 
-POST /messages: Enviar uma nova mensagem.
+GET /equipment/me: Get equipment owned by the current user (owner).
 
-GET /messages/conversation/{conversationId}: Obter mensagens de uma conversa específica.
+- Rentals (Renters, Owners, and Admin):
 
-Avaliações:
+POST /rentals: Create a new rental request (renter).
 
-POST /reviews: Criar uma nova avaliação.
+GET /rentals: Get all rentals (admin only, with filtering options).
 
-GET /reviews/user/{userId}: Obter avaliações de um usuário específico.
+GET /rentals/{rentalId}: Get a specific rental by ID (renter, owner, admin).
+
+PUT /rentals/{rentalId}: Update rental status (owner, admin). Only allow status updates to valid transitions (e.g., PENDING -> ACCEPTED).
+
+DELETE /rentals/{rentalId}: Delete/Cancel a rental request (renter, owner, admin – conditions apply depending on role and rental status). Consider soft delete.
+
+GET /rentals/me: Get rentals related to the current user (renter or owner). Filter by role.
+
+- Reviews (Renters, Owners, and Admin):
+
+POST /reviews: Create a new review (renter, owner – only after rental is complete).
+
+GET /reviews/{equipmentId}: Get reviews for a specific equipment (public).
+
+GET /reviews/me: Get reviews given or received by the current user (renter, owner).
+
+DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete.
+
+- Messages (Renters and Owners):
+
+POST /messages: Send a new message (renter, owner).
+
+GET /messages/{rentalId}: Get messages for a specific rental (renter, owner).
+
+GET /messages/me: Get messages sent and received by the current user (renter, owner).
+
+- Availability (Owners and Admin):
+
+GET /availability/{equipmentId}: Get availability for a specific equipment.
+
+POST /availability/{equipmentId}: Create new availability slots for equipment (owner, admin).
+
+PUT /availability/{availabilityId}: Update availability slot (owner, admin).
+
+DELETE /availability/{availabilityId}: Delete availability slot (owner, admin).
+
+- Authorization Notes:
+
+Protected Routes: Routes prefixed with /auth/me, /equipment/me, /rentals/me, and /reviews/me require authentication (valid JWT).
+
+Admin Routes: Routes like /users and deleting reviews require admin privileges.
+
+Owner Routes: Routes related to managing equipment and updating rental status (approving/rejecting) require owner privileges.
+
+Renter Routes: Routes for creating rental requests require renter privileges.
