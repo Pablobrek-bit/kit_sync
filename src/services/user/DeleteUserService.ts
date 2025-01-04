@@ -17,9 +17,9 @@ export class DeleteUserService {
     }
 
     if (user.id === id) {
-      throw new InvalidArgumentError('You can only delete your own user');
+      throw new InvalidArgumentError("You can't only delete your own user");
     }
 
-    await this.userRepository.delete(id);
+    await this.userRepository.delete(userId);
   }
 }
