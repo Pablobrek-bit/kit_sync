@@ -319,6 +319,31 @@ describe('User API Integration Tests', () => {
     expect(response.status).toBe(500);
   });
 
+  // DELETE
+  it('should be able to delete a user', async () => {
+    const newUser = {
+      name: 'test',
+      email: 'test@gmail.com',
+      password: '123456',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/users')
+      .send(newUser);
+
+    const response = await request(app.server)
+      .delete(`/users/${responseCreate.body.user.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(204);
+
+    const user = await prisma.user.findUnique({
+      where: { id: responseCreate.body.user.id },
+    });
+
+    expect(user).toBeNull();
+  });
+
   it('should not be able to delete a user if the user not be admin', async () => {
     const newUser = {
       name: 'Pablo',
@@ -343,7 +368,6 @@ describe('User API Integration Tests', () => {
     expect(response.body.message).toEqual('Unauthorized');
   });
 
-  // DELETE
   it('should not be able to delete a user without token', async () => {
     const newUser = {
       name: 'Pablo',
@@ -363,6 +387,43 @@ describe('User API Integration Tests', () => {
     expect(response.body.message).toEqual('Authorization header is missing');
   });
 
+  it('should not be able to delete a user with invalid token', async () => {
+    const newUser = {
+      name: 'Pablo',
+      email: 'pablo@gmail.com',
+      password: '123456',
+    };
+
+    const responseCreate = await request(app.server)
+      .post('/users')
+      .send(newUser);
+
+    const response = await request(app.server)
+      .delete(`/users/${responseCreate.body.user.id}`)
+      .set('Authorization', 'Bearer invalid-token');
+
+    expect(response.status).toBe(500);
+  });
+
+  it('should not be able to delete a user with invalid id', async () => {
+    const response = await request(app.server)
+      .delete('/users/invalid-id')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  it('should not be able to delete a user with invalid id', async () => {
+    const response = await request(app.server)
+      .delete('/users/1')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toEqual('Validation error');
+  });
+
+  // UPDATE
   it('should be able to update a user', async () => {
     const response = await request(app.server)
       .put('/users')
@@ -373,7 +434,6 @@ describe('User API Integration Tests', () => {
     expect(response.body.name).toEqual('Pablo Henrique');
   });
 
-  // UPDATE
   it('should not be able to update a user without token', async () => {
     const response = await request(app.server)
       .put('/users')
