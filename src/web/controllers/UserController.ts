@@ -111,12 +111,15 @@ export class UserController {
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
     const paramsSchema = z.object({
-      userId: z.string(),
+      userId: z
+        .string({
+          message: 'User id is required',
+          invalid_type_error: 'User id must be a string',
+        })
+        .uuid({ message: 'Invalid user id' }),
     });
 
     const { userId } = paramsSchema.parse(request.params);
-
-    console.log('chegou aqui');
 
     const id = request.user.sub;
 
