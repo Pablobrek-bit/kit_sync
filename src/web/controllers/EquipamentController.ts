@@ -2,9 +2,11 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { CreateEquipamentService } from 'services/equipament/CreateEquipamentService';
 import { DeleteEquipmentService } from 'services/equipament/DeleteEquipmentService';
+import { DeletePhotoEquipmentService } from 'services/equipament/DeletePhotoEquipmentService';
 import { GetEquipamentService } from 'services/equipament/GetEquipamentService';
 import { IndexEquipmentService } from 'services/equipament/IndexEquipmentService';
 import { UpdateEquipmentService } from 'services/equipament/UpdateEquipmentService';
+import { UploadPhotoEquipmentService } from 'services/equipament/UploadPhotoEquipmentService';
 import { z } from 'zod';
 
 export class EquipamentController {
@@ -151,5 +153,70 @@ export class EquipamentController {
     const { equipments } = await indexEquipmentService.execute(data);
 
     return reply.send({ equipments });
+  }
+
+  async uploadPhoto(request: FastifyRequest, reply: FastifyReply) {
+    const schemaParams = z.object({
+      equipmentId: z
+        .string({
+          required_error: 'EquipmentId is required',
+          invalid_type_error: 'EquipmentId must to be a string',
+        })
+        .uuid({ message: 'EquipmentId must to be a valid UUID' }),
+    });
+
+    const schema = z
+      .object({
+        photos: z.array(z.string()).optional(),
+      })
+      .strict();
+
+    const userId = request.user.sub;
+    const { equipmentId } = schemaParams.parse(request.params);
+    const { photos } = schema.parse(request.body);
+
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const uploadPhotoEquipmentService = new UploadPhotoEquipmentService(
+      equipmentRepository,
+    );
+
+    await uploadPhotoEquipmentService.execute({
+      equipmentId,
+      photos,
+      userId,
+    });
+
+    return reply.code(204).send();
+  }
+
+  async deletePhoto(request: FastifyRequest, reply: FastifyReply) {
+    const schemaParams = z.object({
+      equipmentId: z
+        .string({
+          required_error: 'EquipmentId is required',
+          invalid_type_error: 'EquipmentId must to be a string',
+        })
+        .uuid({ message: 'EquipmentId must to be a valid UUID' }),
+      photoId: z.string({
+        required_error: 'PhotoId is required',
+        invalid_type_error: 'PhotoId must to be a string',
+      }),
+    });
+
+    const userId = request.user.sub;
+    const { equipmentId, photoId } = schemaParams.parse(request.params);
+
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const deletePhotoEquipmentService = new DeletePhotoEquipmentService(
+      equipmentRepository,
+    );
+
+    await deletePhotoEquipmentService.execute({
+      equipmentId,
+      photoId,
+      userId,
+    });
+
+    return reply.code(204).send();
   }
 }
