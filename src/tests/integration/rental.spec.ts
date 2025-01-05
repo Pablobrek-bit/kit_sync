@@ -234,7 +234,8 @@ describe('Rental API Integration Tests', () => {
       .get(`/rentals/${responseCreate.body.id}`)
       .set('Authorization', `Bearer invalid-token`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to get a rental with unauthorized user', async () => {
@@ -354,10 +355,6 @@ describe('Rental API Integration Tests', () => {
     const loginResponse = await request(app.server)
       .post('/auth')
       .send({ email: newUser.email, password: newUser.password });
-
-    console.log('Token: ' + loginResponse.body.token);
-
-    console.log(responseCreate.body);
 
     const response = await request(app.server)
       .delete(`/rentals/${responseCreate.body.id}`)
@@ -589,7 +586,8 @@ describe('Rental API Integration Tests', () => {
       .get('/rentals')
       .set('Authorization', `Bearer invalid-token`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should be able to list all rentals by equipment', async () => {

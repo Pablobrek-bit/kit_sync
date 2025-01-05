@@ -316,7 +316,8 @@ describe('User API Integration Tests', () => {
       .get('/users')
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   // DELETE
@@ -402,7 +403,8 @@ describe('User API Integration Tests', () => {
       .delete(`/users/${responseCreate.body.user.id}`)
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to delete a user with invalid id', async () => {
@@ -449,7 +451,8 @@ describe('User API Integration Tests', () => {
       .send({ name: 'Pablo Henrique' })
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to update a user with invalid name', async () => {
@@ -539,7 +542,8 @@ describe('User API Integration Tests', () => {
       .get('/users/index')
       .set('Authorization', 'Bearer invalid-token');
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should be able to get all users with name filter', async () => {
