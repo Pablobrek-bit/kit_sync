@@ -1,7 +1,7 @@
 import { AuthService } from '../../../services/user/AuthService';
 import { UserMock } from 'tests/mocks/UserMock';
 
-describe('Create User Service', () => {
+describe('Auth User Service', () => {
   let authService: AuthService;
   let userMock: UserMock;
 

@@ -1,7 +1,7 @@
 import { DeleteUserService } from 'services/user/DeleteUserService';
 import { UserMock } from 'tests/mocks/UserMock';
 
-describe('Create User Service', () => {
+describe('Delete User Service', () => {
   let deleteUserService: DeleteUserService;
   let userMock: UserMock;
 
@@ -35,7 +35,7 @@ describe('Create User Service', () => {
         id: userMock.idLoggedUser,
         userId: userMock.idLoggedUser,
       }),
-    ).rejects.toThrow('You can only delete your own user');
+    ).rejects.toThrow("You can't only delete your own user");
     expect(userMock.userRepositoryMock.delete).toHaveBeenCalledTimes(0);
   });
 });

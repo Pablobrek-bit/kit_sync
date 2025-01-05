@@ -1,7 +1,7 @@
 import { UpdateUserService } from 'services/user/UpdateUserService';
 import { UserMock } from 'tests/mocks/UserMock';
 
-describe('Create User Service', () => {
+describe('Update User Service', () => {
   let updateUserService: UpdateUserService;
   let userMock: UserMock;
 
