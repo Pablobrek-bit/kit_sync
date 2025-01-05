@@ -14,23 +14,23 @@ GET /users: Get all users (admin only). (x)
 
 GET /users/{userId}: Get a specific user by ID (admin only).
 
-DELETE /users/{userId}: Delete a user (admin only). Consider soft delete instead of hard delete.
+DELETE /users/{userId}: Delete a user (admin only). Consider soft delete instead of hard delete. (x)
 
 - Equipment (Owners and Admin):
 
-POST /equipment: Create new equipment (owner, admin).
+POST /equipment: Create new equipment (owner, admin). (x)
 
-GET /equipment: Get all equipment (public, with filtering options).
+GET /equipment: Get all equipment (public, with filtering options). (x)
 
-GET /equipment/{equipmentId}: Get specific equipment by ID (public).
+GET /equipment/{equipmentId}: Get specific equipment by ID (public). (x)
 
-PUT /equipment/{equipmentId}: Update equipment (owner, admin).
+PUT /equipment/{equipmentId}: Update equipment (owner, admin). (x)
 
-DELETE /equipment/{equipmentId}: Delete equipment (owner, admin). Consider soft delete.
+DELETE /equipment/{equipmentId}: Delete equipment (owner, admin). Consider soft delete. (x)
 
-POST /equipment/{equipmentId}/photos: Upload photos for equipment (owner, admin).
+POST /equipment/{equipmentId}/photos: Upload photos for equipment (owner, admin). (x)
 
-DELETE /equipment/{equipmentId}/photos/{photoId}: Delete a photo from equipment (owner, admin).
+DELETE /equipment/{equipmentId}/photos/{photoId}: Delete a photo from equipment (owner, admin). (x)
 
 GET /equipment/me: Get equipment owned by the current user (owner).
 
