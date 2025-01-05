@@ -75,8 +75,6 @@ describe('Equipment API Integration Tests', () => {
       })
       .set('Authorization', `Bearer ${token}`);
 
-    console.log(response.body.issues._errors);
-
     expect(response.status).toBe(400);
   });
 
@@ -92,7 +90,8 @@ describe('Equipment API Integration Tests', () => {
       })
       .set('Authorization', `Bearer invalidToken`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should be able to get a equipment by id', async () => {
@@ -156,7 +155,8 @@ describe('Equipment API Integration Tests', () => {
       .get(`/equipments/${equipament.id}`)
       .set('Authorization', `Bearer invalidToken`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to get a equipment by id with invalid id', async () => {
@@ -229,7 +229,8 @@ describe('Equipment API Integration Tests', () => {
       .delete(`/equipments/${equipament.id}`)
       .set('Authorization', `Bearer invalidToken`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to delete a equipment by id with invalid id', async () => {
@@ -360,7 +361,8 @@ describe('Equipment API Integration Tests', () => {
       })
       .set('Authorization', `Bearer invalidToken`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should not be able to update a equipment by id with invalid user', async () => {
@@ -530,7 +532,8 @@ describe('Equipment API Integration Tests', () => {
       .get(`/equipments`)
       .set('Authorization', `Bearer invalidToken`);
 
-    expect(response.status).toBe(500);
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
   });
 
   it('should be able to list all equipments by category', async () => {
@@ -688,5 +691,90 @@ describe('Equipment API Integration Tests', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.equipments).toHaveLength(1);
+  });
+
+  it('should be able to upload a photo to a equipment', async () => {
+    const equipmentResponse = await request(app.server)
+      .post('/equipments')
+      .send({
+        name: 'Equipment Test',
+        description: 'Equipment Test Description',
+        category: 'Equipment Test Category',
+        dailyPrice: 100,
+        photos: ['photo3'],
+      })
+      .set('Authorization', `Bearer ${token}`);
+
+    const { equipament } = equipmentResponse.body;
+
+    const response = await request(app.server)
+      .post(`/equipments/${equipament.id}/photos`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ photos: ['photo1', 'photo2'] });
+
+    const responseGet = await request(app.server)
+      .get(`/equipments/${equipament.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(204);
+    expect(responseGet.body.equipament.photos).toEqual([
+      'photo3',
+      'photo1',
+      'photo2',
+    ]);
+  });
+
+  it('should not be able to upload a photo to a equipment without token', async () => {
+    const equipmentResponse = await request(app.server)
+      .post('/equipments')
+      .send({
+        name: 'Equipment Test',
+        description: 'Equipment Test Description',
+        category: 'Equipment Test Category',
+        dailyPrice: 100,
+        photos: [],
+      })
+      .set('Authorization', `Bearer ${token}`);
+
+    const { equipament } = equipmentResponse.body;
+
+    const response = await request(app.server)
+      .post(`/equipments/${equipament.id}/photos`)
+      .send({ photos: ['photo1', 'photo2'] });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to upload a photo to a equipment with invalid token', async () => {
+    const equipmentResponse = await request(app.server)
+      .post('/equipments')
+      .send({
+        name: 'Equipment Test',
+        description: 'Equipment Test Description',
+        category: 'Equipment Test Category',
+        dailyPrice: 100,
+        photos: [],
+      })
+      .set('Authorization', `Bearer ${token}`);
+
+    const { equipament } = equipmentResponse.body;
+
+    const response = await request(app.server)
+      .post(`/equipments/${equipament.id}/photos`)
+      .set('Authorization', `Bearer invalidToken`)
+      .send({ photos: ['photo1', 'photo2'] });
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toEqual('Authorization header is invalid');
+  });
+
+  it('should not be able to upload a photo to a equipment with invalid id', async () => {
+    const response = await request(app.server)
+      .post(`/equipments/invalidId/photos`)
+      .set('Authorization', `Bearer ${token}`)
+      .send({ photos: ['photo1', 'photo2'] });
+
+    expect(response.status).toBe(400);
   });
 });
