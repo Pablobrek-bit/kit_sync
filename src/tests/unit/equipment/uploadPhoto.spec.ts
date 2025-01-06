@@ -1,7 +1,7 @@
 import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 import { UploadPhotoEquipmentService } from '../../../services/equipament/UploadPhotoEquipmentService';
 
-describe('Index Equipment Service', () => {
+describe('Upload Photo Equipment Service', () => {
   let uploadPhotoEquipmentService: UploadPhotoEquipmentService;
   let equipmentMock: EquipmentMock;
 
