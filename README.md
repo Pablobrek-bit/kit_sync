@@ -32,7 +32,7 @@ POST /equipment/{equipmentId}/photos: Upload photos for equipment (owner, admin)
 
 DELETE /equipment/{equipmentId}/photos/{photoId}: Delete a photo from equipment (owner, admin). (x)
 
-GET /equipment/me: Get equipment owned by the current user (owner).
+GET /equipment/me: Get equipments owned by the current user (owner). (x)
 
 - Rentals (Renters, Owners, and Admin):
 
