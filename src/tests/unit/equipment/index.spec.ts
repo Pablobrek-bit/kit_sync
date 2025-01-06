@@ -4,7 +4,7 @@ import { IndexEquipmentService } from '../../../services/equipament/IndexEquipme
 const page = 1;
 const size = 5;
 
-describe('Get Equipment Service', () => {
+describe('Index Equipment Service', () => {
   let indexEquipmentService: IndexEquipmentService;
   let equipmentMock: EquipmentMock;
 
