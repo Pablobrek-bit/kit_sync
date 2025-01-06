@@ -1,7 +1,7 @@
 import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 import { DeletePhotoEquipmentService } from '../../../services/equipament/DeletePhotoEquipmentService';
 
-describe('Index Equipment Service', () => {
+describe('Delete Photo Equipment Service', () => {
   let deletePhotoEquipmentService: DeletePhotoEquipmentService;
   let equipmentMock: EquipmentMock;
 
