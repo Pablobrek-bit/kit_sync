@@ -43,11 +43,16 @@ export class EquipmentPrismaRepository implements EquipamentRepository {
     category?: string;
     dailyPrice?: number;
     available?: boolean;
+    propertyId?: string;
     page: number;
     size: number;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
+
+    if (data.propertyId) {
+      where.propertyId = data.propertyId;
+    }
 
     if (data.name) {
       where.name = { contains: data.name };

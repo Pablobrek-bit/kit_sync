@@ -14,6 +14,7 @@ export interface EquipamentRepository {
     category?: string;
     dailyPrice?: number;
     available?: boolean;
+    propertyId?: string;
     page: number;
     size: number;
   }): Promise<Equipment[]>;
