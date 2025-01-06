@@ -25,6 +25,12 @@ export class DeletePhotoEquipmentService {
       throw new InvalidArgumentError('User does not have permission');
     }
 
+    const photoExists = equipment.photos.includes(photoId);
+
+    if (!photoExists) {
+      throw new InvalidArgumentError('Photo not found');
+    }
+
     const photos = equipment.photos.filter((photo) => photo !== photoId);
 
     await this.equipmentRepository.update({
