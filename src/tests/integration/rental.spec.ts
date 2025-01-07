@@ -1,7 +1,7 @@
 import { app } from 'app';
 import request from 'supertest';
 import { prisma } from 'lib/prisma';
-import type { Equipment } from '@prisma/client';
+import { Role, type Equipment } from '@prisma/client';
 
 describe('Rental API Integration Tests', () => {
   let token: string;
@@ -13,10 +13,17 @@ describe('Rental API Integration Tests', () => {
     .toISOString()
     .split('T')[0];
 
+  // const user = {
+  //   name: 'Pablo',
+  //   email: 'pabloTest@gmail.com',
+  //   password: '123456',
+  // };
+
   const user = {
     name: 'Pablo',
     email: 'pabloTest@gmail.com',
-    password: '123456',
+    password: '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
+    role: Role.ADMIN,
   };
 
   const equipment = {
@@ -36,11 +43,18 @@ describe('Rental API Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await request(app.server).post('/users').send(user);
+    await prisma.user.create({
+      data: {
+        name: user.name,
+        email: user.email,
+        password: user.password,
+        role: user.role,
+      },
+    });
 
     const loginResponse = await request(app.server)
       .post('/auth')
-      .send({ email: user.email, password: user.password });
+      .send({ email: user.email, password: '123456' });
 
     token = loginResponse.body.token;
 
