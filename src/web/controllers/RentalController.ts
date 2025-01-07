@@ -187,4 +187,32 @@ export class RentalController {
 
     return reply.send(rentals);
   }
+
+  async indexByUser(request: FastifyRequest, reply: FastifyReply) {
+    const schema = z.object({
+      page: z.coerce
+        .number({ invalid_type_error: 'Page must to be a type number' })
+        .positive({ message: 'Page must to be positive' })
+        .default(1),
+      size: z.coerce
+        .number({
+          invalid_type_error: 'Size must to be a type number',
+        })
+        .positive({ message: 'Size must to be positive' })
+        .default(5),
+    });
+
+    const renterId = request.user.sub;
+    const data = schema.parse(request.query);
+
+    const rentalRepository = new RentalPrismaRepository();
+    const indexRentalService = new IndexRentalService(rentalRepository);
+
+    const { rentals } = await indexRentalService.execute({
+      renterId,
+      ...data,
+    });
+
+    return reply.send(rentals);
+  }
 }

@@ -1,5 +1,6 @@
 import type { FastifyInstance } from 'fastify';
 import { ensureAuthenticated } from 'middleware/ensureAuthenticated';
+import { verifyAdmin } from 'middleware/verifyAdmin';
 import { RentalController } from 'web/controllers/RentalController';
 
 export async function rentalRoutes(app: FastifyInstance) {
@@ -11,5 +12,6 @@ export async function rentalRoutes(app: FastifyInstance) {
   app.get('/:id', rentalController.get);
   app.delete('/:id', rentalController.delete);
   app.put('/:id', rentalController.update);
-  app.get('/', rentalController.index);
+  app.get('/', { preHandler: verifyAdmin }, rentalController.index);
+  app.get('/me', rentalController.indexByUser);
 }
