@@ -42,11 +42,11 @@ GET /rentals: Get all rentals (admin only, with filtering options). (x)
 
 GET /rentals/{rentalId}: Get a specific rental by ID (renter, owner, admin). (x)
 
-PUT /rentals/{rentalId}: Update rental status (owner, admin). Only allow status updates to valid transitions (e.g., PENDING -> ACCEPTED).
+PUT /rentals/{rentalId}: Update rental status (owner, admin). Only allow status updates to valid transitions (e.g., PENDING -> ACCEPTED). (x)
 
 DELETE /rentals/{rentalId}: Delete/Cancel a rental request (renter, owner, admin – conditions apply depending on role and rental status). Consider soft delete. (x)
 
-@ GET /rentals/me: Get rentals related to the current user (renter or owner). Filter by role.
+GET /rentals/me: Get rentals related to the current user (renter or owner). Filter by role. (x)
 
 - Reviews (Renters, Owners, and Admin):
 
