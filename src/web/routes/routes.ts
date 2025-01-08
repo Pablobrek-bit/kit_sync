@@ -3,10 +3,12 @@ import { userRoutes } from './userRoutes';
 import { authRoutes } from './authRoutes';
 import { rentalRoutes } from './rentalRoutes';
 import { equipamentRoutes } from './equipamentRoutes';
+import { reviewRoutes } from './reviewRoutes';
 
 export async function routes(app: FastifyInstance) {
   app.register(userRoutes, { prefix: '/users' });
   app.register(authRoutes, { prefix: '/auth' });
   app.register(equipamentRoutes, { prefix: '/equipments' });
   app.register(rentalRoutes, { prefix: '/rentals' });
+  app.register(reviewRoutes, { prefix: '/reviews' });
 }
