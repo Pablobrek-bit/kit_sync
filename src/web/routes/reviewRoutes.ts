@@ -8,4 +8,5 @@ export async function reviewRoutes(app: FastifyInstance) {
   const reviewController = new ReviewController();
 
   app.post('/:rentalId', reviewController.create);
+  app.get('/index/:equipmentId', reviewController.indexByEquipment);
 }

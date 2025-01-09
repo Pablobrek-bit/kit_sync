@@ -1,7 +1,9 @@
 import type { FastifyReply, FastifyRequest } from 'fastify';
+import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { ReviewPrismaRepository } from 'repository/prisma/ReviewPrismaRepository';
 import { CreateReviewService } from 'services/review/CreateReviewService';
+import { IndexReviewService } from 'services/review/IndexReviewService';
 import { z } from 'zod';
 
 export class ReviewController {
@@ -48,5 +50,45 @@ export class ReviewController {
     });
 
     reply.status(201).send({ review });
+  }
+
+  async indexByEquipment(request: FastifyRequest, reply: FastifyReply) {
+    const paramsSchema = z
+      .object({
+        equipmentId: z
+          .string({ message: 'Equipment ID is required' })
+          .uuid({ message: 'Equipment ID must be a valid UUID' }),
+      })
+      .strict();
+
+    const querySchema = z.object({
+      page: z.coerce
+        .number({ invalid_type_error: 'Page must to be a type number' })
+        .positive({ message: 'Page must to be positive' })
+        .default(1),
+      size: z.coerce
+        .number({
+          invalid_type_error: 'Size must to be a type number',
+        })
+        .positive({ message: 'Size must to be positive' })
+        .default(5),
+    });
+
+    const { equipmentId } = paramsSchema.parse(request.params);
+    const data = querySchema.parse(request.query);
+
+    const reviewRepository = new ReviewPrismaRepository();
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const indexReviewService = new IndexReviewService(
+      reviewRepository,
+      equipmentRepository,
+    );
+
+    const { reviews } = await indexReviewService.execute({
+      equipmentId,
+      ...data,
+    });
+
+    reply.send({ reviews });
   }
 }
