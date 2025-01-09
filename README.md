@@ -50,7 +50,7 @@ GET /rentals/me: Get rentals related to the current user (renter or owner). Filt
 
 - Reviews (Renters, Owners, and Admin):
 
-POST /reviews: Create a new review (renter, owner – only after rental is complete).
+POST /reviews: Create a new review (renter, owner – only after rental is complete). (tests)
 
 GET /reviews/{equipmentId}: Get reviews for a specific equipment (public).
 
