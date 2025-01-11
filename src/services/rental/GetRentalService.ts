@@ -24,7 +24,7 @@ export class GetRentalService {
       throw new InvalidArgumentError('Rental not found');
     }
 
-    if (rental.renterId !== userId) {
+    if (rental.renterId !== userId && rental.ownerId !== userId) {
       throw new InvalidArgumentError('Unauthorized');
     }
 
