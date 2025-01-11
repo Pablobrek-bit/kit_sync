@@ -817,5 +817,3 @@ describe('User API Integration Tests', () => {
     expect(response.body).toHaveLength(1);
   });
 });
-
-// "test:integration": "docker-compose up -d site_kit_sync_test_db && timeout /t 5 && npx prisma migrate deploy --schema=./prisma/schema.test.prisma && npx jest --testPathPattern='tests/integration/.*\\.spec\\.ts$' --runInBand && docker-compose stop site_kit_sync_test_db && docker-compose rm -f site_kit_sync_test_db"
