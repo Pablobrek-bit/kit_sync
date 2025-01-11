@@ -52,9 +52,9 @@ GET /rentals/me: Get rentals related to the current user (renter or owner). Filt
 
 POST /reviews: Create a new review (renter, owner – only after rental is complete). (tests)
 
-GET /reviews/{equipmentId}: Get reviews for a specific equipment (public).
+GET /reviews/{equipmentId}: Get reviews for a specific equipment (public). (test)
 
-GET /reviews/me: Get reviews given or received by the current user (renter, owner).
+GET /reviews/me: Get reviews given or received by the current user (renter, owner). (tests)
 
 DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete.
 
