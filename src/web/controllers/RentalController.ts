@@ -2,6 +2,7 @@ import { RentalStatus } from '@prisma/client';
 import type { FastifyReply, FastifyRequest } from 'fastify';
 import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
+import { UserPrismaRespository } from 'repository/prisma/UserPrismaRepository';
 import { CreateRentalService } from 'services/rental/CreateRentalService';
 import { DeleteRentalService } from 'services/rental/DeleteRentalService';
 import { GetRentalService } from 'services/rental/GetRentalService';
@@ -12,21 +13,30 @@ import { z } from 'zod';
 export class RentalController {
   async create(request: FastifyRequest, reply: FastifyReply) {
     const schema = z.object({
-      equipmentId: z.string({ required_error: 'Equipment ID is required' }),
+      equipmentId: z
+        .string({ required_error: 'Equipment ID is required' })
+        .uuid({
+          message: 'Equipment ID must be a valid UUID',
+        }),
+      ownerId: z.string({ required_error: 'Owner ID is required' }).uuid({
+        message: 'Owner ID must be a valid UUID',
+      }),
       startAt: z.string({ required_error: 'Start date is required' }),
       endAt: z.string({ required_error: 'End date is required' }),
     });
 
     const renterId = request.user.sub;
 
-    const { equipmentId, startAt, endAt } = schema.parse(request.body);
+    const { equipmentId, startAt, endAt, ownerId } = schema.parse(request.body);
 
     const rentalRepository = new RentalPrismaRepository();
     const equipmentRepository = new EquipmentPrismaRepository();
+    const userRepository = new UserPrismaRespository();
 
     const rentalService = new CreateRentalService(
       rentalRepository,
       equipmentRepository,
+      userRepository,
     );
 
     const { rental } = await rentalService.execute({
@@ -34,6 +44,7 @@ export class RentalController {
       startAt,
       endAt,
       renterId,
+      ownerId,
     });
 
     return reply.code(201).send(rental);
