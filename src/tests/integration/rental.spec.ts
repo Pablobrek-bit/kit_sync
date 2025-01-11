@@ -1,7 +1,7 @@
 import { app } from 'app';
 import request from 'supertest';
 import { prisma } from 'lib/prisma';
-import { Role, type Equipment } from '@prisma/client';
+import { Role, type Equipment, type User } from '@prisma/client';
 
 describe('Rental API Integration Tests', () => {
   let token: string;
@@ -25,6 +25,8 @@ describe('Rental API Integration Tests', () => {
     password: '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
     role: Role.ADMIN,
   };
+
+  let ownerUser: User;
 
   const equipment = {
     name: 'Equipment Test',
@@ -52,6 +54,16 @@ describe('Rental API Integration Tests', () => {
       },
     });
 
+    ownerUser = await prisma.user.create({
+      data: {
+        name: 'Owner',
+        email: 'owner@gmail.com',
+        password:
+          '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
+        role: Role.USER,
+      },
+    });
+
     const loginResponse = await request(app.server)
       .post('/auth')
       .send({ email: user.email, password: '123456' });
@@ -76,6 +88,7 @@ describe('Rental API Integration Tests', () => {
   it('should be create a new rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -92,7 +105,8 @@ describe('Rental API Integration Tests', () => {
 
   it('should not be able to create a rental with invalid equipment', async () => {
     const rental = {
-      equipmentId: 'invalid-id',
+      equipmentId: '14f5d78b-a607-463c-a75b-f8c858b53d63',
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -102,6 +116,8 @@ describe('Rental API Integration Tests', () => {
       .set('Authorization', `Bearer ${token}`)
       .send(rental);
 
+    console.log(response.body);
+
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Equipment not found');
   });
@@ -109,6 +125,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental with invalid date range', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt: endAt,
       endAt: startAt,
     };
@@ -130,6 +147,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -146,6 +164,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to create a rental without authentication', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -158,6 +177,7 @@ describe('Rental API Integration Tests', () => {
 
   it('should not be able to create a rental without equipmentId', async () => {
     const rental = {
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -173,6 +193,7 @@ describe('Rental API Integration Tests', () => {
 
   it('should not be able to create a rental without startAt', async () => {
     const rental = {
+      ownerId: ownerUser.id,
       equipmentId: equipmentCreated.id,
       endAt,
     };
@@ -188,6 +209,7 @@ describe('Rental API Integration Tests', () => {
 
   it('should not be able to create a rental without endAt', async () => {
     const rental = {
+      ownerId: ownerUser.id,
       equipmentId: equipmentCreated.id,
       startAt,
     };
@@ -204,6 +226,7 @@ describe('Rental API Integration Tests', () => {
   // GET
   it('should be able to get a rental', async () => {
     const rental = {
+      ownerId: ownerUser.id,
       equipmentId: equipmentCreated.id,
       startAt,
       endAt,
@@ -242,6 +265,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to get a rental with invalid user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -262,6 +286,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to get a rental with unauthorized user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -304,6 +329,7 @@ describe('Rental API Integration Tests', () => {
   it('should be able to delete a rental', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -356,6 +382,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to delete a rental with unauthorized user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -410,6 +437,7 @@ describe('Rental API Integration Tests', () => {
       endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
         .toISOString()
         .split('T')[0],
+      ownerId: ownerUser.id,
     };
 
     const responseCreate = await request(app.server)
@@ -423,8 +451,6 @@ describe('Rental API Integration Tests', () => {
       .send({
         startAt: newStartAt,
       });
-
-    console.log(response.body);
 
     expect(response.status).toBe(200);
     expect(response.body.rental.startAt.split('T')[0]).toBe(newStartAt);
@@ -452,6 +478,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to update a rental with unauthorized user', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -501,6 +528,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -528,6 +556,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -551,6 +580,7 @@ describe('Rental API Integration Tests', () => {
   it('should not be able to update a rental with invalid status', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -576,6 +606,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -600,6 +631,7 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals', async () => {
     const rental = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -636,18 +668,21 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals by equipment', async () => {
     const rental1 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental2 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental3 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -678,18 +713,21 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals by status', async () => {
     const rental1 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental2 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental3 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
@@ -725,12 +763,14 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals by totalMin', async () => {
     const rental1 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental2 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
         .toISOString()
@@ -739,6 +779,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental3 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
         .toISOString()
@@ -771,12 +812,14 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals by totalMax', async () => {
     const rental1 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental2 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
         .toISOString()
@@ -785,6 +828,7 @@ describe('Rental API Integration Tests', () => {
 
     const rental3 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
         .toISOString()
@@ -817,18 +861,21 @@ describe('Rental API Integration Tests', () => {
   it('should be able to list all rentals by page', async () => {
     const rental1 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental2 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
 
     const rental3 = {
       equipmentId: equipmentCreated.id,
+      ownerId: ownerUser.id,
       startAt,
       endAt,
     };
