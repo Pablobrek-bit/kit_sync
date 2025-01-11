@@ -4,7 +4,9 @@ import type { ReviewRepository } from 'repository/interfaces/ReviewRepository';
 import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface IndexReviewServiceRequest {
-  equipmentId: string;
+  receptionId?: string;
+  reviewerId?: string;
+  equipmentId?: string;
   page: number;
   size: number;
 }
@@ -23,15 +25,21 @@ export class IndexReviewService {
     equipmentId,
     page,
     size,
+    receptionId,
+    reviewerId,
   }: IndexReviewServiceRequest): Promise<IndexReviewServiceResponse> {
-    const equipment = await this.equipmentRepository.findById(equipmentId);
+    if (equipmentId) {
+      const equipment = await this.equipmentRepository.findById(equipmentId);
 
-    if (!equipment) {
-      throw new InvalidArgumentError('Equipment not found');
+      if (!equipment) {
+        throw new InvalidArgumentError('Equipment not found');
+      }
     }
 
     const reviews = await this.reviewRepository.index({
       equipmentId,
+      receptionId,
+      reviewerId,
       page,
       size,
     });

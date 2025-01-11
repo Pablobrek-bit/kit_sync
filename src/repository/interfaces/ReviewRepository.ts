@@ -4,7 +4,9 @@ export interface ReviewRepository {
   create(data: Prisma.ReviewUncheckedCreateInput): Promise<Review>;
 
   index(data: {
-    equipmentId: string;
+    receptionId?: string;
+    reviewerId?: string;
+    equipmentId?: string;
     page: number;
     size: number;
   }): Promise<Review[]>;

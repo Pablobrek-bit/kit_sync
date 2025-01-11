@@ -34,7 +34,7 @@ export class ReviewController {
 
     const data = schema.parse(request.body);
     const { rentalId } = paramsSchema.parse(request.params);
-    const userId = request.user.sub;
+    const ownerId = request.user.sub;
 
     const reviewRepository = new ReviewPrismaRepository();
     const rentalRepository = new RentalPrismaRepository();
@@ -46,7 +46,7 @@ export class ReviewController {
     const { review } = await createReviewService.execute({
       ...data,
       rentalId,
-      userId,
+      ownerId,
     });
 
     reply.status(201).send({ review });
@@ -86,6 +86,39 @@ export class ReviewController {
 
     const { reviews } = await indexReviewService.execute({
       equipmentId,
+      ...data,
+    });
+
+    reply.send({ reviews });
+  }
+
+  async indexByUser(request: FastifyRequest, reply: FastifyReply) {
+    const querySchema = z.object({
+      page: z.coerce
+        .number({ invalid_type_error: 'Page must to be a type number' })
+        .positive({ message: 'Page must to be positive' })
+        .default(1),
+      size: z.coerce
+        .number({
+          invalid_type_error: 'Size must to be a type number',
+        })
+        .positive({ message: 'Size must to be positive' })
+        .default(5),
+    });
+
+    const data = querySchema.parse(request.query);
+    const userId = request.user.sub;
+
+    const reviewRepository = new ReviewPrismaRepository();
+    const equipmentRepository = new EquipmentPrismaRepository();
+    const indexReviewService = new IndexReviewService(
+      reviewRepository,
+      equipmentRepository,
+    );
+
+    const { reviews } = await indexReviewService.execute({
+      receptionId: userId,
+      reviewerId: userId,
       ...data,
     });
 

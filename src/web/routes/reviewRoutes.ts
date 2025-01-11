@@ -9,4 +9,5 @@ export async function reviewRoutes(app: FastifyInstance) {
 
   app.post('/:rentalId', reviewController.create);
   app.get('/index/:equipmentId', reviewController.indexByEquipment);
+  app.get('/me', reviewController.indexByUser);
 }
