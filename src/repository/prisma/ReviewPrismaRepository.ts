@@ -52,4 +52,22 @@ export class ReviewPrismaRepository implements ReviewRepository {
 
     return reviews;
   }
+
+  async findById(reviewId: string) {
+    const review = await prisma.review.findUnique({
+      where: {
+        id: reviewId,
+      },
+    });
+
+    return review;
+  }
+
+  async delete(reviewId: string) {
+    await prisma.review.delete({
+      where: {
+        id: reviewId,
+      },
+    });
+  }
 }

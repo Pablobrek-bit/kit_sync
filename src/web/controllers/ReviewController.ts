@@ -3,6 +3,7 @@ import { EquipmentPrismaRepository } from 'repository/prisma/EquipmentPrismaRepo
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { ReviewPrismaRepository } from 'repository/prisma/ReviewPrismaRepository';
 import { CreateReviewService } from 'services/review/CreateReviewService';
+import { DeleteReviewService } from 'services/review/DeleteReviewService';
 import { IndexReviewService } from 'services/review/IndexReviewService';
 import { z } from 'zod';
 
@@ -123,5 +124,24 @@ export class ReviewController {
     });
 
     reply.send({ reviews });
+  }
+
+  async delete(request: FastifyRequest, reply: FastifyReply) {
+    const paramsSchema = z
+      .object({
+        reviewId: z
+          .string({ message: 'Review ID is required' })
+          .uuid({ message: 'Review ID must be a valid UUID' }),
+      })
+      .strict();
+
+    const { reviewId } = paramsSchema.parse(request.params);
+
+    const reviewRepository = new ReviewPrismaRepository();
+    const deleteReviewService = new DeleteReviewService(reviewRepository);
+
+    await deleteReviewService.execute({ reviewId });
+
+    reply.status(204).send();
   }
 }

@@ -10,4 +10,8 @@ export interface ReviewRepository {
     page: number;
     size: number;
   }): Promise<Review[]>;
+
+  findById(reviewId: string): Promise<Review | null>;
+
+  delete(reviewId: string): Promise<void>;
 }
