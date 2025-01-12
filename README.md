@@ -56,7 +56,7 @@ GET /reviews/{equipmentId}: Get reviews for a specific equipment (public). (test
 
 GET /reviews/me: Get reviews given or received by the current user (renter, owner). (tests)
 
-DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete.
+DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete. (tests)
 
 - Messages (Renters and Owners):
 
