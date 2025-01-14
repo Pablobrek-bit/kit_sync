@@ -1,19 +1,23 @@
 import { CreateRentalService } from 'services/rental/CreateRentalService';
 import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 import { RentalMock } from 'tests/mocks/RentalMock';
+import { UserMock } from 'tests/mocks/UserMock';
 
 describe('Create Rental Service', () => {
   let createRentalService: CreateRentalService;
   let equipmentMock: EquipmentMock;
   let rentalMock: RentalMock;
+  let userMock: UserMock;
 
   beforeEach(() => {
     equipmentMock = new EquipmentMock();
     rentalMock = new RentalMock();
+    userMock = new UserMock();
 
     createRentalService = new CreateRentalService(
       rentalMock.rentalRepositoryMock,
       equipmentMock.equipamentRepositoryMock,
+      userMock.userRepositoryMock,
     );
   });
 
@@ -37,6 +41,8 @@ describe('Create Rental Service', () => {
   //   expect(equipamentRepositoryMock.findById).toHaveBeenCalledTimes(1);
   // });
 
+  // =========================================================
+
   it('should not be able to create a rental with invalid equipment id', async () => {
     await expect(
       createRentalService.execute({
@@ -44,6 +50,7 @@ describe('Create Rental Service', () => {
         renterId: rentalMock.mockRental.renterId,
         startAt: new Date().toISOString(),
         endAt: new Date().toISOString(),
+        ownerId: userMock.ownerMock.id,
       }),
     ).rejects.toBeInstanceOf(Error);
 
@@ -60,6 +67,7 @@ describe('Create Rental Service', () => {
         renterId: 'invalid-id',
         startAt: new Date().toISOString(),
         endAt: new Date().toISOString(),
+        ownerId: userMock.ownerMock.id,
       }),
     ).rejects.toBeInstanceOf(Error);
 
@@ -76,13 +84,12 @@ describe('Create Rental Service', () => {
         renterId: rentalMock.mockRental.renterId,
         startAt: new Date().toISOString(),
         endAt: new Date().toISOString(),
+        ownerId: userMock.ownerMock.id,
       }),
     ).rejects.toBeInstanceOf(Error);
 
     expect(rentalMock.rentalRepositoryMock.create).toHaveBeenCalledTimes(0);
-    expect(
-      equipmentMock.equipamentRepositoryMock.findById,
-    ).toHaveBeenCalledTimes(1);
+    expect(userMock.userRepositoryMock.findById).toHaveBeenCalledTimes(1);
   });
 
   it('should not be able to create a rental with equipment not available', async () => {
@@ -97,6 +104,7 @@ describe('Create Rental Service', () => {
         renterId: rentalMock.mockRental.renterId,
         startAt: new Date().toISOString(),
         endAt: new Date().toISOString(),
+        ownerId: userMock.ownerMock.id,
       }),
     ).rejects.toBeInstanceOf(Error);
 
@@ -115,6 +123,7 @@ describe('Create Rental Service', () => {
         renterId: rentalMock.mockRental.renterId,
         startAt: new Date().toISOString(),
         endAt: new Date().toISOString(),
+        ownerId: userMock.ownerMock.id,
       }),
     ).rejects.toBeInstanceOf(Error);
 
