@@ -12,10 +12,12 @@ export class UserMock {
   };
 
   public idLoggedUser = '4a95d2c8-7e33-4215-85f1-46bd6a3a407b';
+  public idOwner = '4a95d2c8-7e33-4215-85f1-46bd6a3a407d';
   public existsId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407e';
   public notExistsId = '4a95d2c8-7e33-4215-85f1-46bd6a3a407s';
   public notExistsEmail = 'aleatorio@gmail.com';
   public emailExists = 'pablo@gmail.com';
+  public ownerEmailExists = 'owner@gmail.com';
   public mockUser: User = {
     id: '4a95d2c8-7e33-4215-85f1-46bd6a3a407e',
     name: 'Pablo',
@@ -24,10 +26,25 @@ export class UserMock {
     createdAt: new Date(),
     updatedAt: new Date(),
     role: 'USER' as Role,
+    deleted: false,
+  };
+  public ownerMock: User = {
+    id: this.idOwner,
+    name: 'Owner',
+    email: this.ownerEmailExists,
+    password: '$2a$08$6lpCFQrZGUQ7sgtjNG360Os2nYaSe8Gdc40zoYZhK9bnBHi5HmIze',
+    createdAt: new Date(),
+    updatedAt: new Date(),
+    role: 'USER' as Role,
+    deleted: false,
   };
 
   public constructor() {
     this.userRepositoryMock.findById.mockImplementation(async (id) => {
+      if (id === this.idOwner) {
+        return this.ownerMock;
+      }
+
       if (id === this.mockUser.id || id === this.idLoggedUser) {
         this.mockUser.id = id;
         return this.mockUser;

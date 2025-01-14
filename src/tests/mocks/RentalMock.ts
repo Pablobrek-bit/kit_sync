@@ -14,6 +14,7 @@ export class RentalMock {
   // Mocked data
   public idRentalExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407e';
   public idRentalNotExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407z';
+  public idOwnerExists = '4a95d2c8-7e33-4215-85f1-46bd6a3a407d';
   public renterIdBelongsToRental = '4a95d2c8-7e33-4215-85f1-46bd6a3a407b';
   public renterIdNotBelongsToRental = '4a95d2c8-7e33-4215-85f1-46bd6a3a407c';
   public mockRental: Rental = {
@@ -27,6 +28,7 @@ export class RentalMock {
     renterId: this.renterIdBelongsToRental,
     equipmentId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407z',
     deleteAt: null,
+    ownerId: this.idOwnerExists,
   };
 
   // Mocked methods
