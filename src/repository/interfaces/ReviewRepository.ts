@@ -13,5 +13,5 @@ export interface ReviewRepository {
 
   findById(reviewId: string): Promise<Review | null>;
 
-  delete(reviewId: string): Promise<void>;
+  update(data: Prisma.ReviewUncheckedUpdateInput): Promise<null>;
 }

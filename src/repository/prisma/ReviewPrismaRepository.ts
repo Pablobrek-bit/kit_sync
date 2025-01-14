@@ -63,11 +63,14 @@ export class ReviewPrismaRepository implements ReviewRepository {
     return review;
   }
 
-  async delete(reviewId: string) {
-    await prisma.review.delete({
+  async update(data: Prisma.ReviewUncheckedUpdateInput) {
+    await prisma.review.update({
       where: {
-        id: reviewId,
+        id: data.id as string,
       },
+      data,
     });
+
+    return null;
   }
 }

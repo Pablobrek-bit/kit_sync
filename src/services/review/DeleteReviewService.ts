@@ -15,6 +15,14 @@ export class DeleteReviewService {
       throw new InvalidArgumentError('Review not found');
     }
 
-    await this.reviewRepository.delete(reviewId);
+    if (review.deleted) {
+      throw new InvalidArgumentError('Review already deleted');
+    }
+
+    await this.reviewRepository.update({
+      id: reviewId,
+      deleted: true,
+      deleteAt: new Date(),
+    });
   }
 }
