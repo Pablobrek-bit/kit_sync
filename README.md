@@ -50,13 +50,13 @@ GET /rentals/me: Get rentals related to the current user (renter or owner). Filt
 
 - Reviews (Renters, Owners, and Admin):
 
-POST /reviews: Create a new review (renter, owner – only after rental is complete). (tests)
+POST /reviews: Create a new review (renter, owner – only after rental is complete).
 
-GET /reviews/{equipmentId}: Get reviews for a specific equipment (public). (test)
+GET /reviews/{equipmentId}: Get reviews for a specific equipment (public). (test:integration)
 
-GET /reviews/me: Get reviews given or received by the current user (renter, owner). (tests)
+GET /reviews/me: Get reviews given or received by the current user (renter, owner). (test:integration)
 
-DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete. (tests)
+DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete. (test:integration)
 
 - Messages (Renters and Owners):
 
