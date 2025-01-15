@@ -41,8 +41,6 @@ describe('Create Rental Service', () => {
   //   expect(equipamentRepositoryMock.findById).toHaveBeenCalledTimes(1);
   // });
 
-  // =========================================================
-
   it('should not be able to create a rental with invalid equipment id', async () => {
     await expect(
       createRentalService.execute({
