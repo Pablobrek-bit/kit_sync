@@ -1,7 +1,7 @@
 import { DeleteReviewService } from 'services/review/DeleteReviewService';
 import { ReviewMock } from 'tests/mocks/ReviewMock';
 
-describe('Create Review Service', () => {
+describe('Delete Review Service', () => {
   let deleteReviewService: DeleteReviewService;
   let reviewMock: ReviewMock;
 

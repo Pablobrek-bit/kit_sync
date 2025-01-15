@@ -2,7 +2,7 @@ import { IndexReviewService } from 'services/review/IndexReviewService';
 import { EquipmentMock } from 'tests/mocks/EquipmentMock';
 import { ReviewMock } from 'tests/mocks/ReviewMock';
 
-describe('Create Review Service', () => {
+describe('Index Review Service', () => {
   let indexReviewService: IndexReviewService;
   let reviewMock: ReviewMock;
   let equipmentMock: EquipmentMock;
