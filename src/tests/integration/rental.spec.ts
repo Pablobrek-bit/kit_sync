@@ -13,12 +13,6 @@ describe('Rental API Integration Tests', () => {
     .toISOString()
     .split('T')[0];
 
-  // const user = {
-  //   name: 'Pablo',
-  //   email: 'pabloTest@gmail.com',
-  //   password: '123456',
-  // };
-
   const user = {
     name: 'Pablo',
     email: 'pabloTest@gmail.com',
