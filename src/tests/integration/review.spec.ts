@@ -160,8 +160,6 @@ describe('User API Integration Tests', () => {
       .set('Authorization', `Bearer 123`)
       .send(review);
 
-    console.log('response.body', response.body);
-
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is invalid');
   });
@@ -180,5 +178,223 @@ describe('User API Integration Tests', () => {
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  // INDEX BY EQUIPMENT
+  it('should be able to list reviews by equipment', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const response = await request(app.server)
+      .get(`/reviews/index/${equipment.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.reviews).toHaveLength(1);
+  });
+
+  it('should not be able to list reviews by equipment with invalid equipmentId', async () => {
+    const response = await request(app.server)
+      .get(`/reviews/index/100`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to list reviews by equipment with equipment not found', async () => {
+    const response = await request(app.server)
+      .get(`/reviews/index/4a95d2c8-7e33-4215-85f1-46bd6a3a407e`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Equipment not found');
+  });
+
+  it('should not be able to list reviews by equipment without token', async () => {
+    const response = await request(app.server).get(
+      `/reviews/index/${equipment.id}`,
+    );
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to list reviews by equipment with invalid token', async () => {
+    const response = await request(app.server)
+      .get(`/reviews/index/${equipment.id}`)
+      .set('Authorization', `Bearer 123`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is invalid');
+  });
+
+  // INDEX BY USER
+  it('should be able to list reviews by owner user', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const response = await request(app.server)
+      .get(`/reviews/me`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.reviews).toHaveLength(1);
+  });
+
+  it('should be able to list reviews by renter user', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const response = await request(app.server)
+      .get(`/reviews/me`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.reviews).toHaveLength(1);
+  });
+
+  it('should not be able to list reviews by user without token', async () => {
+    const response = await request(app.server).get(`/reviews/me`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to list reviews by user with invalid token', async () => {
+    const response = await request(app.server)
+      .get(`/reviews/me`)
+      .set('Authorization', `Bearer 123`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is invalid');
+  });
+
+  // DELETE
+  it('should be able to delete a review with role admin', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    const responseCreate = await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const reviewId = responseCreate.body.review.id;
+
+    const response = await request(app.server)
+      .delete(`/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(204);
+  });
+
+  it('should not be able to delete a review with role user', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    const responseCreate = await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const reviewId = responseCreate.body.review.id;
+
+    const response = await request(app.server)
+      .delete(`/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${tokerOwner}`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Unauthorized');
+  });
+
+  it('should not be able to delete a review with invalid reviewId', async () => {
+    const response = await request(app.server)
+      .delete(`/reviews/100`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to delete a review with review not found', async () => {
+    const response = await request(app.server)
+      .delete(`/reviews/4a95d2c8-7e33-4215-85f1-46bd6a3a407e`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Review not found');
+  });
+
+  it('should not be able to delete a review without token', async () => {
+    const response = await request(app.server).delete(`/reviews/100`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to delete a review with invalid token', async () => {
+    const response = await request(app.server)
+      .delete(`/reviews/100`)
+      .set('Authorization', `Bearer 123`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is invalid');
+  });
+
+  it('should not be able to delete a review with review already deleted', async () => {
+    const review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
+    const responseCreate = await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    const reviewId = responseCreate.body.review.id;
+
+    await request(app.server)
+      .delete(`/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    const response = await request(app.server)
+      .delete(`/reviews/${reviewId}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Review already deleted');
+
+    const reviewDeleted = await prisma.review.findUnique({
+      where: { id: reviewId },
+    });
+
+    expect(reviewDeleted?.deleted).toBe(true);
   });
 });
