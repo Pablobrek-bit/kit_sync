@@ -33,12 +33,12 @@ export class EquipamentController {
 
     const data = schema.parse(request.body);
 
-    const { equipament } = await equipmenteCreateService.execute({
+    const { equipment } = await equipmenteCreateService.execute({
       ...data,
       propertyId,
     });
 
-    return reply.status(201).send({ equipament });
+    return reply.status(201).send({ equipment });
   }
 
   async get(request: FastifyRequest, reply: FastifyReply) {
@@ -60,14 +60,20 @@ export class EquipamentController {
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    const schemaParams = z.object({
-      equipamentId: z.string({
-        required_error: 'EquipamentId is required',
-        invalid_type_error: 'EquipamentId must to be a string',
-      }),
-    });
+    console.log(request.params);
 
-    const { equipamentId } = schemaParams.parse(request.params);
+    const schemaParams = z
+      .object({
+        equipmentId: z.string({
+          required_error: 'EquipmentId is required',
+          invalid_type_error: 'EquipmentId must to be a string',
+        }),
+      })
+      .strict();
+
+    const { equipmentId } = schemaParams.parse(request.params);
+
+    console.log('id no controller: ', equipmentId);
 
     const userId = request.user.sub;
 
@@ -76,7 +82,7 @@ export class EquipamentController {
       equipmentRepository,
     );
 
-    await deleteEquipmentService.execute({ id: equipamentId, userId });
+    await deleteEquipmentService.execute({ id: equipmentId, userId });
 
     return reply.status(204).send();
   }

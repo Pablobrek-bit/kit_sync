@@ -12,7 +12,7 @@ interface CreateEquipamentServiceRequest {
 }
 
 interface CreateEquipamentServiceResponse {
-  equipament: Equipment;
+  equipment: Equipment;
 }
 
 export class CreateEquipamentService {
@@ -21,8 +21,8 @@ export class CreateEquipamentService {
   async execute(
     data: CreateEquipamentServiceRequest,
   ): Promise<CreateEquipamentServiceResponse> {
-    const equipament = await this.equipamentRepository.create(data);
+    const equipment = await this.equipamentRepository.create(data);
 
-    return { equipament };
+    return { equipment };
   }
 }

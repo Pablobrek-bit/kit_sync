@@ -10,13 +10,13 @@ export class DeleteEquipmentService {
   constructor(private equipmentRepository: EquipamentRepository) {}
 
   async execute({ id, userId }: DeleteEquipmentServiceRequest): Promise<void> {
-    const equipament = await this.equipmentRepository.findById(id);
+    const equipment = await this.equipmentRepository.findById(id);
 
-    if (!equipament) {
+    if (!equipment) {
       throw new InvalidArgumentError('Equipament not found');
     }
 
-    if (equipament.propertyId !== userId) {
+    if (equipment.propertyId !== userId) {
       throw new InvalidArgumentError(
         'You are not allowed to delete this equipament',
       );
