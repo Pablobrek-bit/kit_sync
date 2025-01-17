@@ -2,10 +2,12 @@ import { app } from 'app';
 import request from 'supertest';
 import { prisma } from 'lib/prisma';
 import { Role, type Equipment, type User } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 describe('Rental API Integration Tests', () => {
   let token: string;
   let equipmentCreated: Equipment;
+  let ownerUser: User;
   const startAt = new Date(new Date().getTime() + 1000 * 60 * 60 * 24)
     .toISOString()
     .split('T')[0];
@@ -13,21 +15,86 @@ describe('Rental API Integration Tests', () => {
     .toISOString()
     .split('T')[0];
 
-  const user = {
-    name: 'Pablo',
-    email: 'pabloTest@gmail.com',
-    password: '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
-    role: Role.ADMIN,
+  const userFactory = (
+    overrides?: Partial<{
+      name: string;
+      email: string;
+      password: string;
+      role: Role;
+    }>,
+  ) => ({
+    name: overrides?.name || 'User',
+    email: overrides?.email || 'user@gmail.com',
+    password: overrides?.password || '123456',
+    role: overrides?.role || Role.USER,
+  });
+
+  const authenticateUser = async (user: ReturnType<typeof userFactory>) => {
+    await prisma.user.create({
+      data: {
+        ...user,
+        password: await hash(user.password, 8),
+      },
+    });
+
+    const response = await request(app.server)
+      .post('/auth')
+      .send({ email: user.email, password: user.password });
+
+    const token = response.body.token;
+    const userCreated = response.body.user;
+
+    return { token, user: userCreated, response };
   };
 
-  let ownerUser: User;
+  const equipmentFactory = (
+    overrides?: Partial<{
+      name: string;
+      description: string;
+      category: string;
+      dailyPrice: number;
+      photos: string[];
+    }>,
+  ) => ({
+    name: overrides?.name || 'Equipment Test',
+    description: overrides?.description || 'Equipment Test Description',
+    category: overrides?.category || 'Equipment Test Category',
+    dailyPrice: overrides?.dailyPrice || 100,
+    photos: overrides?.photos || ['photo1', 'photo2'],
+  });
 
-  const equipment = {
-    name: 'Equipment Test',
-    description: 'Equipment Test Description',
-    category: 'Equipment Test Category',
-    dailyPrice: 100,
-    photos: ['photo1', 'photo2'],
+  const createEquipment = async (
+    equipment: ReturnType<typeof equipmentFactory>,
+  ) => {
+    const response = await request(app.server)
+      .post('/equipments')
+      .set('Authorization', `Bearer ${token}`)
+      .send(equipment);
+
+    return response.body.equipment;
+  };
+
+  const rentalFactory = (
+    overrides?: Partial<{
+      equipmentId: string;
+      ownerId: string;
+      startAt: string;
+      endAt: string;
+    }>,
+  ) => ({
+    equipmentId: overrides?.equipmentId || equipmentCreated.id,
+    ownerId: overrides?.ownerId || ownerUser.id,
+    startAt: overrides?.startAt || startAt,
+    endAt: overrides?.endAt || endAt,
+  });
+
+  const createRental = async (rental: ReturnType<typeof rentalFactory>) => {
+    const response = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    return response;
   };
 
   beforeAll(async () => {
@@ -39,37 +106,21 @@ describe('Rental API Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await prisma.user.create({
-      data: {
-        name: user.name,
-        email: user.email,
-        password: user.password,
-        role: user.role,
-      },
-    });
+    token = (await authenticateUser(userFactory({ role: Role.ADMIN }))).token;
 
-    ownerUser = await prisma.user.create({
-      data: {
-        name: 'Owner',
-        email: 'owner@gmail.com',
-        password:
-          '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
-        role: Role.USER,
-      },
-    });
+    ownerUser = (
+      await authenticateUser(
+        userFactory({
+          role: Role.USER,
+          name: 'Owner',
+          email: 'owner@gmail.com',
+          password:
+            '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
+        }),
+      )
+    ).user;
 
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: user.email, password: '123456' });
-
-    token = loginResponse.body.token;
-
-    const responseEquipment = await request(app.server)
-      .post('/equipments')
-      .set('Authorization', `Bearer ${token}`)
-      .send(equipment);
-
-    equipmentCreated = responseEquipment.body.equipament;
+    equipmentCreated = await createEquipment(equipmentFactory());
   });
 
   afterEach(async () => {
@@ -80,17 +131,12 @@ describe('Rental API Integration Tests', () => {
 
   // CREATE
   it('should be create a new rental', async () => {
-    const rental = {
+    const rental = rentalFactory({
       equipmentId: equipmentCreated.id,
       ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    });
 
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const response = await createRental(rental);
 
     expect(response.status).toBe(201);
     expect(response.body).toHaveProperty('id');
@@ -98,36 +144,23 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to create a rental with invalid equipment', async () => {
-    const rental = {
-      equipmentId: '14f5d78b-a607-463c-a75b-f8c858b53d63',
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    console.log(response.body);
+    const response = await createRental(
+      rentalFactory({
+        equipmentId: '14f5d78b-a607-463c-a75b-f8c858b53d63',
+      }),
+    );
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Equipment not found');
   });
 
   it('should not be able to create a rental with invalid date range', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt: endAt,
-      endAt: startAt,
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const response = await createRental(
+      rentalFactory({
+        startAt: endAt,
+        endAt: startAt,
+      }),
+    );
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Invalid date range');
@@ -139,29 +172,14 @@ describe('Rental API Integration Tests', () => {
       data: { available: false },
     });
 
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const response = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const response = await createRental(rentalFactory());
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Equipment not available');
   });
 
   it('should not be able to create a rental without authentication', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    const rental = rentalFactory();
 
     const response = await request(app.server).post('/rentals').send(rental);
 
@@ -170,11 +188,10 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to create a rental without equipmentId', async () => {
-    const rental = {
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    const otherRental = rentalFactory();
+
+    // eslint-disable-next-line @typescript-eslint/no-unused-vars
+    const { equipmentId, ...rental } = otherRental;
 
     const response = await request(app.server)
       .post('/rentals')
@@ -219,17 +236,7 @@ describe('Rental API Integration Tests', () => {
 
   // GET
   it('should be able to get a rental', async () => {
-    const rental = {
-      ownerId: ownerUser.id,
-      equipmentId: equipmentCreated.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const responseCreate = await createRental(rentalFactory());
 
     const response = await request(app.server)
       .get(`/rentals/${responseCreate.body.id}`)
@@ -241,6 +248,8 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to get a rental with invalid id', async () => {
+    await createRental(rentalFactory());
+
     const response = await request(app.server)
       .get('/rentals/invalid-id')
       .set('Authorization', `Bearer ${token}`);
@@ -250,6 +259,8 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to get a rental without authentication', async () => {
+    await createRental(rentalFactory());
+
     const response = await request(app.server).get('/rentals/1');
 
     expect(response.status).toBe(401);
@@ -257,17 +268,7 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to get a rental with invalid user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const responseCreate = await createRental(rentalFactory());
 
     const response = await request(app.server)
       .get(`/rentals/${responseCreate.body.id}`)
@@ -278,33 +279,15 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to get a rental with unauthorized user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    const responseCreate = await createRental(rentalFactory());
 
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    const newUser = {
-      name: 'Pablo',
-      email: 'pablo@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(newUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: newUser.email, password: newUser.password });
+    const newToken = (
+      await authenticateUser(userFactory({ email: 'test@gmail.com' }))
+    ).token;
 
     const response = await request(app.server)
       .get(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer ${loginResponse.body.token}`);
+      .set('Authorization', `Bearer ${newToken}`);
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Unauthorized');
@@ -321,25 +304,15 @@ describe('Rental API Integration Tests', () => {
 
   // DELETE
   it('should be able to delete a rental', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const rental = (await createRental(rentalFactory())).body;
 
     const response = await request(app.server)
-      .delete(`/rentals/${responseCreate.body.id}`)
+      .delete(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'CANCELLED' });
 
     const responseGet = await request(app.server)
-      .get(`/rentals/${responseCreate.body.id}`)
+      .get(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(204);
@@ -364,8 +337,10 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to delete a rental with invalid status', async () => {
+    const rental = (await createRental(rentalFactory())).body;
+
     const response = await request(app.server)
-      .delete('/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b')
+      .delete(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'INVALID' });
 
@@ -374,33 +349,15 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to delete a rental with unauthorized user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    const rental = (await createRental(rentalFactory())).body;
 
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    const newUser = {
-      name: 'Pablo',
-      email: 'pablo@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(newUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: newUser.email, password: newUser.password });
+    const token = (
+      await authenticateUser(userFactory({ email: 'test@gmail.com' }))
+    ).token;
 
     const response = await request(app.server)
-      .delete(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer ${loginResponse.body.token}`)
+      .delete(`/rentals/${rental.id}`)
+      .set('Authorization', `Bearer ${token}`)
       .send({ status: 'CANCELLED' });
 
     expect(response.status).toBe(400);
@@ -419,25 +376,19 @@ describe('Rental API Integration Tests', () => {
     expect(response.body.message).toBe('Rental not found');
   });
 
-  //   UPDATE
+  // UPDATE
   it('should be able to update a rental', async () => {
     const newStartAt = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 2)
       .toISOString()
       .split('T')[0];
 
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      startAt,
-      endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
-        .toISOString()
-        .split('T')[0],
-      ownerId: ownerUser.id,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const responseCreate = await createRental(
+      rentalFactory({
+        endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
+          .toISOString()
+          .split('T')[0],
+      }),
+    );
 
     const response = await request(app.server)
       .put(`/rentals/${responseCreate.body.id}`)
@@ -461,42 +412,24 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to update a rental without authentication', async () => {
-    const response = await request(app.server).put(
-      '/rentals/f43e4af9-fba8-4fe0-90f1-58ad8fca125b',
-    );
+    const rental = (await createRental(rentalFactory())).body;
+
+    const response = await request(app.server).put(`/rentals/${rental.id}`);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is missing');
   });
 
   it('should not be able to update a rental with unauthorized user', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
+    const responseCreate = await createRental(rentalFactory());
 
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
-
-    const newUser = {
-      name: 'Pablo',
-      email: 'pablo@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(newUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: newUser.email, password: newUser.password });
+    const token = (
+      await authenticateUser(userFactory({ email: 'test@gmail.com' }))
+    ).token;
 
     const response = await request(app.server)
       .put(`/rentals/${responseCreate.body.id}`)
-      .set('Authorization', `Bearer ${loginResponse.body.token}`)
+      .set('Authorization', `Bearer ${token}`)
       .send({ startAt });
 
     expect(response.status).toBe(400);
@@ -520,20 +453,10 @@ describe('Rental API Integration Tests', () => {
       .toISOString()
       .split('T')[0];
 
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const rental = (await createRental(rentalFactory())).body;
 
     const response = await request(app.server)
-      .put(`/rentals/${responseCreate.body.id}`)
+      .put(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ startAt: newStartAt });
 
@@ -548,20 +471,10 @@ describe('Rental API Integration Tests', () => {
       new Date().getTime() - 1000 * 60 * 60 * 24,
     );
 
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const rental = (await createRental(rentalFactory())).body;
 
     const response = await request(app.server)
-      .put(`/rentals/${responseCreate.body.id}`)
+      .put(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ startAt: newStartAtBeforeCurrentDate });
 
@@ -572,20 +485,10 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should not be able to update a rental with invalid status', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const rental = (await createRental(rentalFactory())).body;
 
     const response = await request(app.server)
-      .put(`/rentals/${responseCreate.body.id}`)
+      .put(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'INVALID' });
 
@@ -598,20 +501,10 @@ describe('Rental API Integration Tests', () => {
       new Date().getTime() - 1000 * 60 * 60 * 24,
     );
 
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const responseCreate = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    const rental = (await createRental(rentalFactory())).body;
 
     const response = await request(app.server)
-      .put(`/rentals/${responseCreate.body.id}`)
+      .put(`/rentals/${rental.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ endAt: newEndAtBeforeCurrentDate });
 
@@ -623,17 +516,7 @@ describe('Rental API Integration Tests', () => {
 
   // INDEX;
   it('should be able to list all rentals', async () => {
-    const rental = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental);
+    await createRental(rentalFactory());
 
     const response = await request(app.server)
       .get('/rentals')
@@ -660,41 +543,9 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should be able to list all rentals by equipment', async () => {
-    const rental1 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental2 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental3 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental1);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental2);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental3);
+    await createRental(rentalFactory());
+    await createRental(rentalFactory());
+    await createRental(rentalFactory());
 
     const response = await request(app.server)
       .get(`/rentals?equipmentId=${equipmentCreated.id}`)
@@ -705,46 +556,14 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should be able to list all rentals by status', async () => {
-    const rental1 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental2 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental3 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const response1 = await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental1);
+    const rental1 = (await createRental(rentalFactory())).body;
+    await createRental(rentalFactory());
+    await createRental(rentalFactory());
 
     await request(app.server)
-      .put(`/rentals/${response1.body.id}`)
+      .put(`/rentals/${rental1.id}`)
       .set('Authorization', `Bearer ${token}`)
       .send({ status: 'ACCEPTED' });
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental2);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental3);
 
     const response = await request(app.server)
       .get('/rentals?status=ACCEPTED')
@@ -755,45 +574,21 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should be able to list all rentals by totalMin', async () => {
-    const rental1 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental2 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
-        .toISOString()
-        .split('T')[0],
-    };
-
-    const rental3 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
-        .toISOString()
-        .split('T')[0],
-    };
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental1);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental2);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental3);
+    await createRental(rentalFactory());
+    await createRental(
+      rentalFactory({
+        endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
+          .toISOString()
+          .split('T')[0],
+      }),
+    );
+    await createRental(
+      rentalFactory({
+        endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
+          .toISOString()
+          .split('T')[0],
+      }),
+    );
 
     const response = await request(app.server)
       .get('/rentals?totalMin=200')
@@ -804,45 +599,21 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should be able to list all rentals by totalMax', async () => {
-    const rental1 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental2 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
-        .toISOString()
-        .split('T')[0],
-    };
-
-    const rental3 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
-        .toISOString()
-        .split('T')[0],
-    };
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental1);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental2);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental3);
+    await createRental(rentalFactory());
+    await createRental(
+      rentalFactory({
+        endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 3)
+          .toISOString()
+          .split('T')[0],
+      }),
+    );
+    await createRental(
+      rentalFactory({
+        endAt: new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 4)
+          .toISOString()
+          .split('T')[0],
+      }),
+    );
 
     const response = await request(app.server)
       .get('/rentals?totalMax=200')
@@ -853,41 +624,9 @@ describe('Rental API Integration Tests', () => {
   });
 
   it('should be able to list all rentals by page', async () => {
-    const rental1 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental2 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    const rental3 = {
-      equipmentId: equipmentCreated.id,
-      ownerId: ownerUser.id,
-      startAt,
-      endAt,
-    };
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental1);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental2);
-
-    await request(app.server)
-      .post('/rentals')
-      .set('Authorization', `Bearer ${token}`)
-      .send(rental3);
+    await createRental(rentalFactory());
+    await createRental(rentalFactory());
+    await createRental(rentalFactory());
 
     const response = await request(app.server)
       .get('/rentals?page=1&size=1')
@@ -951,168 +690,168 @@ describe('Rental API Integration Tests', () => {
     expect(response.body.message).toBe('Validation error');
   });
 
-  // TESTAR COM O NOVO PC
-  // it('should be able to list all rentals by startAt', async () => {
-  //   const rental1 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-11-01',
-  //     endAt: '2025-11-02',
-  //   };
+  // // TESTAR COM O NOVO PC
+  // // it('should be able to list all rentals by startAt', async () => {
+  // //   const rental1 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-11-01',
+  // //     endAt: '2025-11-02',
+  // //   };
 
-  //   const rental2 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-12-01',
-  //     endAt: '2025-12-02',
-  //   };
+  // //   const rental2 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-12-01',
+  // //     endAt: '2025-12-02',
+  // //   };
 
-  //   const rental3 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2026-12-01',
-  //     endAt: '2026-12-02',
-  //   };
+  // //   const rental3 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2026-12-01',
+  // //     endAt: '2026-12-02',
+  // //   };
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental1);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental1);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental2);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental2);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental3);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental3);
 
-  //   const response = await request(app.server)
-  //     .get('/rentals?startAt=2025-11-01')
-  //     .set('Authorization', `Bearer ${token}`);
+  // //   const response = await request(app.server)
+  // //     .get('/rentals?startAt=2025-11-01')
+  // //     .set('Authorization', `Bearer ${token}`);
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body.length).toBe(1);
-  // });
+  // //   expect(response.status).toBe(200);
+  // //   expect(response.body.length).toBe(1);
+  // // });
 
-  // it('should be able to list all rentals by endAt', async () => {
-  //   const rental1 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-11-01',
-  //     endAt: '2025-11-02',
-  //   };
+  // // it('should be able to list all rentals by endAt', async () => {
+  // //   const rental1 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-11-01',
+  // //     endAt: '2025-11-02',
+  // //   };
 
-  //   const rental2 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-12-01',
-  //     endAt: '2025-12-02',
-  //   };
+  // //   const rental2 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-12-01',
+  // //     endAt: '2025-12-02',
+  // //   };
 
-  //   const rental3 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2026-12-01',
-  //     endAt: '2026-12-02',
-  //   };
+  // //   const rental3 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2026-12-01',
+  // //     endAt: '2026-12-02',
+  // //   };
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental1);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental1);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental2);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental2);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental3);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental3);
 
-  //   const response = await request(app.server)
-  //     .get('/rentals?endAt=2025-11-02')
-  //     .set('Authorization', `Bearer ${token}`);
+  // //   const response = await request(app.server)
+  // //     .get('/rentals?endAt=2025-11-02')
+  // //     .set('Authorization', `Bearer ${token}`);
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body.length).toBe(1);
-  // });
+  // //   expect(response.status).toBe(200);
+  // //   expect(response.body.length).toBe(1);
+  // // });
 
-  // it('should be able to list all rentals by createdAt', async () => {
-  //   const rental1 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-11-01',
-  //     endAt: '2025-11-02',
-  //   };
+  // // it('should be able to list all rentals by createdAt', async () => {
+  // //   const rental1 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-11-01',
+  // //     endAt: '2025-11-02',
+  // //   };
 
-  //   const rental2 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-12-01',
-  //     endAt: '2025-12-02',
-  //   };
+  // //   const rental2 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-12-01',
+  // //     endAt: '2025-12-02',
+  // //   };
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental1);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental1);
 
-  //   jest.useFakeTimers().setSystemTime(new Date('2025-12-01').getTime());
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental2);
+  // //   jest.useFakeTimers().setSystemTime(new Date('2025-12-01').getTime());
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental2);
 
-  //   jest.useRealTimers();
+  // //   jest.useRealTimers();
 
-  //   const response = await request(app.server)
-  //     .get('/rentals?createdAt=2025-12-01')
-  //     .set('Authorization', `Bearer ${token}`);
+  // //   const response = await request(app.server)
+  // //     .get('/rentals?createdAt=2025-12-01')
+  // //     .set('Authorization', `Bearer ${token}`);
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body.length).toBe(1);
-  // });
+  // //   expect(response.status).toBe(200);
+  // //   expect(response.body.length).toBe(1);
+  // // });
 
-  // it('should be able to list all rentals by updatedAt', async () => {
-  //   const rental1 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-11-01',
-  //     endAt: '2025-11-02',
-  //   };
+  // // it('should be able to list all rentals by updatedAt', async () => {
+  // //   const rental1 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-11-01',
+  // //     endAt: '2025-11-02',
+  // //   };
 
-  //   const rental2 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2025-12-01',
-  //     endAt: '2025-12-02',
-  //   };
+  // //   const rental2 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2025-12-01',
+  // //     endAt: '2025-12-02',
+  // //   };
 
-  //   const rental3 = {
-  //     equipmentId: equipmentCreated.id,
-  //     startAt: '2026-12-01',
-  //     endAt: '2026-12-02',
-  //   };
+  // //   const rental3 = {
+  // //     equipmentId: equipmentCreated.id,
+  // //     startAt: '2026-12-01',
+  // //     endAt: '2026-12-02',
+  // //   };
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental1);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental1);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental2);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental2);
 
-  //   await request(app.server)
-  //     .post('/rentals')
-  //     .set('Authorization', `Bearer ${token}`)
-  //     .send(rental3);
+  // //   await request(app.server)
+  // //     .post('/rentals')
+  // //     .set('Authorization', `Bearer ${token}`)
+  // //     .send(rental3);
 
-  //   const dataUpdateAt = new Date().toISOString().split('T')[0];
+  // //   const dataUpdateAt = new Date().toISOString().split('T')[0];
 
-  //   const response = await request(app.server)
-  //     .get(`/rentals?updatedAt=${dataUpdateAt}`)
-  //     .set('Authorization', `Bearer ${token}`);
+  // //   const response = await request(app.server)
+  // //     .get(`/rentals?updatedAt=${dataUpdateAt}`)
+  // //     .set('Authorization', `Bearer ${token}`);
 
-  //   expect(response.status).toBe(200);
-  //   expect(response.body.length).toBe(3);
-  // });
+  // //   expect(response.status).toBe(200);
+  // //   expect(response.body.length).toBe(3);
+  // // });
 
-  //=============================================================
+  // //=============================================================
 });
