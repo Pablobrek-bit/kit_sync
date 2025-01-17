@@ -1,13 +1,55 @@
 import { app } from 'app';
 import request from 'supertest';
 import { prisma } from 'lib/prisma';
+import { hash } from 'bcryptjs';
 
 describe('Equipment API Integration Tests', () => {
   let token: string;
-  const user = {
+  const userFactory = () => ({
     name: 'Pablo',
-    email: 'pabloTest@gmail.com',
+    email: `user@gmail.com`,
     password: '123456',
+  });
+
+  const equipmentFactory = (
+    overrides?: Partial<{
+      name: string;
+      description: string;
+      category: string;
+      dailyPrice: number;
+      photos: string[];
+    }>,
+  ) => ({
+    name: overrides?.name || 'Equipment Test',
+    description: overrides?.description || 'Equipment Test Description',
+    category: overrides?.category || 'Equipment Test Category',
+    dailyPrice: overrides?.dailyPrice || 100,
+    photos: overrides?.photos || ['photo1', 'photo2'],
+  });
+
+  const authenticateUser = async (user: ReturnType<typeof userFactory>) => {
+    await prisma.user.create({
+      data: {
+        ...user,
+        password: await hash(user.password, 8),
+      },
+    });
+
+    const response = await request(app.server)
+      .post('/auth')
+      .send({ email: user.email, password: user.password });
+    return response.body.token;
+  };
+
+  const createEquipment = async (
+    equipment: ReturnType<typeof equipmentFactory>,
+    authToken: string,
+  ) => {
+    const response = await request(app.server)
+      .post('/equipments')
+      .send(equipment)
+      .set('Authorization', `Bearer ${authToken}`);
+    return response;
   };
 
   beforeAll(async () => {
@@ -19,13 +61,8 @@ describe('Equipment API Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    await request(app.server).post('/users').send(user);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: user.email, password: user.password });
-
-    token = loginResponse.body.token;
+    const user = userFactory();
+    token = await authenticateUser(user);
   });
 
   afterEach(async () => {
@@ -34,82 +71,52 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to create a new equipment', async () => {
-    const response = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    const equipment = equipmentFactory();
+    const response = await createEquipment(equipment, token);
 
     expect(response.status).toBe(201);
-    expect(response.body.equipament).toHaveProperty('id');
+    expect(response.body.equipment).toHaveProperty('id');
   });
 
   it('should not be able to create a new equipment without token', async () => {
+    const equipment = equipmentFactory();
     const response = await request(app.server)
       .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      });
+      .send(equipment);
 
     expect(response.status).toBe(401);
   });
 
   it('should not be able to create a new equipment with invalid data', async () => {
+    const invalidEquipment = {
+      name: 123,
+      description: 456,
+      category: 789,
+      dailyPrice: -100,
+      photos: ['photo1'],
+    };
+
     const response = await request(app.server)
       .post('/equipments')
-      .send({
-        name: 111,
-        description: 23,
-        category: 12,
-        dailyPrice: -100,
-        photos: ['photo1', 'photo2'],
-      })
+      .send(invalidEquipment)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(400);
   });
 
   it('should not be able to create a new equipment with invalid token', async () => {
-    const response = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer invalidToken`);
+    const equipment = equipmentFactory();
+    const response = await createEquipment(equipment, 'invalidToken');
 
     expect(response.status).toBe(401);
     expect(response.body.message).toEqual('Authorization header is invalid');
   });
-
   it('should be able to get a equipment by id', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .get(`/equipments/${equipament.id}`)
+      .get(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(200);
@@ -117,42 +124,21 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to get a equipment by id without token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
-
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
     const response = await request(app.server).get(
-      `/equipments/${equipament.id}`,
+      `/equipments/${equipment.id}`,
     );
 
     expect(response.status).toBe(401);
   });
 
   it('should not be able to get a equipment by id with invalid token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .get(`/equipments/${equipament.id}`)
+      .get(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer invalidToken`);
 
     expect(response.status).toBe(401);
@@ -170,63 +156,33 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to delete a equipment by id', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}`)
+      .delete(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(204);
   });
 
   it('should not be able to delete a equipment by id without token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server).delete(
-      `/equipments/${equipament.id}`,
+      `/equipments/${equipment.id}`,
     );
 
     expect(response.status).toBe(401);
   });
 
   it('should not be able to delete a equipment by id with invalid token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}`)
+      .delete(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer invalidToken`);
 
     expect(response.status).toBe(401);
@@ -243,35 +199,16 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to delete a equipment by id with invalid user', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
-    const { equipament } = equipmentResponse.body;
+    const otherUser = userFactory();
+    otherUser.email = 'otherUser@gmail.com';
 
-    const otherUser = {
-      name: 'Pablo1',
-      email: 'pabloTest1@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(otherUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: otherUser.email, password: otherUser.password });
-
-    const otherToken = loginResponse.body.token;
+    const otherToken = await authenticateUser(otherUser);
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}`)
+      .delete(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${otherToken}`);
 
     expect(response.body.message).toBe(
@@ -281,21 +218,11 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to update a equipment by id', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .send({
         name: 'Equipment Test Updated',
         description: 'Equipment Test Description Updated',
@@ -310,21 +237,11 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to update a equipment by id without token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .send({
         name: 'Equipment Test Updated',
         description: 'Equipment Test Description Updated',
@@ -337,21 +254,11 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to update a equipment by id with invalid token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .send({
         name: 'Equipment Test Updated',
         description: 'Equipment Test Description Updated',
@@ -366,35 +273,16 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to update a equipment by id with invalid user', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
-    const { equipament } = equipmentResponse.body;
+    const otherUser = userFactory();
+    otherUser.email = 'otherUser@gmail.com';
 
-    const otherUser = {
-      name: 'Pablo',
-      email: 'Pablo@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(otherUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: otherUser.email, password: otherUser.password });
-
-    const otherToken = loginResponse.body.token;
+    const otherToken = await authenticateUser(otherUser);
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .send({
         name: 'Equipment Test Updated',
         description: 'Equipment Test Description Updated',
@@ -411,21 +299,11 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to update a equipment by id with invalid data', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .send({
         name: 123,
         description: 123,
@@ -439,21 +317,11 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to update a equipment by id with invalid data', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (await createEquipment(equipmentFactory(), token)).body
+      .equipment;
 
     const response = await request(app.server)
-      .put(`/equipments/${equipament.id}`)
+      .put(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.body.message).toBe('Validation error');
@@ -491,27 +359,9 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Equipment Test Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(equipmentFactory(), token);
 
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Equipment Test Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(equipmentFactory(), token);
 
     const response = await request(app.server)
       .get(`/equipments`)
@@ -537,27 +387,8 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by category', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(equipmentFactory({ category: 'Category 1' }), token);
+    await createEquipment(equipmentFactory({ category: 'Category 2' }), token);
 
     const response = await request(app.server)
       .get(`/equipments?category=Category 1`)
@@ -568,27 +399,14 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by name', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(
+      equipmentFactory({ name: 'Equipment Test 1' }),
+      token,
+    );
+    await createEquipment(
+      equipmentFactory({ name: 'Equipment Test 2' }),
+      token,
+    );
 
     const response = await request(app.server)
       .get(`/equipments?name=Equipment Test 1`)
@@ -599,27 +417,8 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by price', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(equipmentFactory({ dailyPrice: 100 }), token);
+    await createEquipment(equipmentFactory({ dailyPrice: 200 }), token);
 
     const response = await request(app.server)
       .get(`/equipments?dailyPrice=100`)
@@ -630,27 +429,14 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by category and price', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(
+      equipmentFactory({ category: 'Category 1', dailyPrice: 100 }),
+      token,
+    );
+    await createEquipment(
+      equipmentFactory({ category: 'Category 2', dailyPrice: 200 }),
+      token,
+    );
 
     const response = await request(app.server)
       .get(`/equipments?category=Category 1&dailyPrice=100`)
@@ -661,27 +447,22 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by name, category and price', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
+    await createEquipment(
+      equipmentFactory({
         category: 'Category 1',
+        name: 'Equipment Test 1',
         dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
+      }),
+      token,
+    );
+    await createEquipment(
+      equipmentFactory({
         category: 'Category 2',
+        name: 'Equipment Test 2',
         dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+      }),
+      token,
+    );
 
     const response = await request(app.server)
       .get(
@@ -694,26 +475,17 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to upload a photo to a equipment', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(equipmentFactory({ photos: ['photo3'] }), token)
+    ).body.equipment;
 
     const response = await request(app.server)
-      .post(`/equipments/${equipament.id}/photos`)
+      .post(`/equipments/${equipment.id}/photos`)
       .set('Authorization', `Bearer ${token}`)
       .send({ photos: ['photo1', 'photo2'] });
 
     const responseGet = await request(app.server)
-      .get(`/equipments/${equipament.id}`)
+      .get(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(204);
@@ -725,21 +497,12 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to upload a photo to a equipment without token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: [],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(equipmentFactory({ photos: ['photo3'] }), token)
+    ).body.equipment;
 
     const response = await request(app.server)
-      .post(`/equipments/${equipament.id}/photos`)
+      .post(`/equipments/${equipment.id}/photos`)
       .send({ photos: ['photo1', 'photo2'] });
 
     expect(response.status).toBe(401);
@@ -747,21 +510,12 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to upload a photo to a equipment with invalid token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: [],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(equipmentFactory({ photos: ['photo3'] }), token)
+    ).body.equipment;
 
     const response = await request(app.server)
-      .post(`/equipments/${equipament.id}/photos`)
+      .post(`/equipments/${equipment.id}/photos`)
       .set('Authorization', `Bearer invalidToken`)
       .send({ photos: ['photo1', 'photo2'] });
 
@@ -779,68 +533,50 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to delete a photo from a equipment', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2', 'photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+        token,
+      )
+    ).body.equipment;
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}/photos/photo1`)
+      .delete(`/equipments/${equipment.id}/photos/photo1`)
       .set('Authorization', `Bearer ${token}`);
 
     const responseGet = await request(app.server)
-      .get(`/equipments/${equipament.id}`)
+      .get(`/equipments/${equipment.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(204);
-    expect(responseGet.body.equipament.photos).toEqual(['photo2', 'photo3']);
+    expect(responseGet.body.equipament.photos).toEqual(['photo3', 'photo2']);
   });
 
   it('should not be able to delete a photo from a equipment without token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2', 'photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo1', 'photo2', 'photo3'] }),
+        token,
+      )
+    ).body.equipment;
 
     const response = await request(app.server).delete(
-      `/equipments/${equipament.id}/photos/photo1`,
+      `/equipments/${equipment.id}/photos/photo1`,
     );
 
     expect(response.status).toBe(401);
   });
 
   it('should not be able to delete a photo from a equipment with invalid token', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2', 'photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+        token,
+      )
+    ).body.equipment;
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}/photos/photo1`)
+      .delete(`/equipments/${equipment.id}/photos/photo1`)
       .set('Authorization', `Bearer invalidToken`);
 
     expect(response.status).toBe(401);
@@ -857,21 +593,15 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to delete a photo from a equipment with invalid photo id', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2', 'photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = equipmentResponse.body;
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+        token,
+      )
+    ).body.equipment;
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}/photos/invalidPhotoId`)
+      .delete(`/equipments/${equipment.id}/photos/invalidPhotoId`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(400);
@@ -879,35 +609,20 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should not be able to delete a photo from a equipment with invalid user', async () => {
-    const equipmentResponse = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2', 'photo3'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+        token,
+      )
+    ).body.equipment;
 
-    const { equipament } = equipmentResponse.body;
+    const otherUser = userFactory();
+    otherUser.email = 'otherUser@gmail.com';
 
-    const otherUser = {
-      name: 'Pablo1',
-      email: 'pablo1@gmail.com',
-      password: '123456',
-    };
-
-    await request(app.server).post('/users').send(otherUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: otherUser.email, password: otherUser.password });
-
-    const otherToken = loginResponse.body.token;
+    const otherToken = await authenticateUser(otherUser);
 
     const response = await request(app.server)
-      .delete(`/equipments/${equipament.id}/photos/photo1`)
+      .delete(`/equipments/${equipment.id}/photos/photo1`)
       .set('Authorization', `Bearer ${otherToken}`);
 
     expect(response.body.message).toBe('User does not have permission');
@@ -915,18 +630,12 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by user', async () => {
-    const responseCreate = await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
-
-    const { equipament } = responseCreate.body;
+    const equipment = (
+      await createEquipment(
+        equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+        token,
+      )
+    ).body.equipment;
 
     const response = await request(app.server)
       .get(`/equipments/me`)
@@ -934,7 +643,7 @@ describe('Equipment API Integration Tests', () => {
 
     expect(response.status).toBe(200);
     expect(response.body.equipments).toHaveLength(1);
-    expect(response.body.equipments[0].id).toBe(equipament.id);
+    expect(response.body.equipments[0].id).toBe(equipment.id);
   });
 
   it('should not be able to list all equipments by user without token', async () => {
@@ -954,30 +663,15 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by user with invalid user', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test',
-        description: 'Equipment Test Description',
-        category: 'Equipment Test Category',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(
+      equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+      token,
+    );
 
-    const otherUser = {
-      name: 'Pablo1',
-      email: 'pablo1@gmail.com',
-      password: '123456',
-    };
+    const otherUser = userFactory();
+    otherUser.email = 'otherUser@gmail.com';
 
-    await request(app.server).post('/users').send(otherUser);
-
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: otherUser.email, password: otherUser.password });
-
-    const otherToken = loginResponse.body.token;
+    const otherToken = await authenticateUser(otherUser);
 
     const response = await request(app.server)
       .get(`/equipments/me`)
@@ -996,27 +690,15 @@ describe('Equipment API Integration Tests', () => {
   });
 
   it('should be able to list all equipments by user with multiple equipments', async () => {
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 1',
-        description: 'Equipment Test Description 1',
-        category: 'Equipment Test Category 1',
-        dailyPrice: 100,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(
+      equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+      token,
+    );
 
-    await request(app.server)
-      .post('/equipments')
-      .send({
-        name: 'Equipment Test 2',
-        description: 'Equipment Test Description 2',
-        category: 'Equipment Test Category 2',
-        dailyPrice: 200,
-        photos: ['photo1', 'photo2'],
-      })
-      .set('Authorization', `Bearer ${token}`);
+    await createEquipment(
+      equipmentFactory({ photos: ['photo3', 'photo2', 'photo1'] }),
+      token,
+    );
 
     const response = await request(app.server)
       .get(`/equipments/me`)
