@@ -2,19 +2,118 @@ import { prisma } from 'lib/prisma';
 import { app } from '../../app';
 import request from 'supertest';
 import { Role, type Equipment, type Rental, type User } from '@prisma/client';
+import { hash } from 'bcryptjs';
 
 describe('Review API Integration Tests', () => {
+  const userFactory = (
+    overrides?: Partial<{
+      name: string;
+      email: string;
+      password: string;
+      role: Role;
+    }>,
+  ) => ({
+    name: overrides?.name || 'User',
+    email: overrides?.email || 'user@gmail.com',
+    password: overrides?.password || '123456',
+    role: overrides?.role || Role.USER,
+  });
+
+  const authenticateUser = async (user: ReturnType<typeof userFactory>) => {
+    await prisma.user.create({
+      data: {
+        ...user,
+        password: await hash(user.password, 8),
+      },
+    });
+
+    const response = await request(app.server)
+      .post('/auth')
+      .send({ email: user.email, password: user.password });
+
+    const token = response.body.token;
+    const userCreated = response.body.user;
+
+    return { token, user: userCreated, response };
+  };
+
+  const equipmentFactory = (
+    overrides?: Partial<{
+      name: string;
+      description: string;
+      category: string;
+      dailyPrice: number;
+      photos: string[];
+    }>,
+  ) => ({
+    name: overrides?.name || 'Equipment Test',
+    description: overrides?.description || 'Equipment Test Description',
+    category: overrides?.category || 'Equipment Test Category',
+    dailyPrice: overrides?.dailyPrice || 100,
+    photos: overrides?.photos || ['photo1', 'photo2'],
+  });
+
+  const createEquipment = async (
+    equipment: ReturnType<typeof equipmentFactory>,
+  ) => {
+    const response = await request(app.server)
+      .post('/equipments')
+      .set('Authorization', `Bearer ${token}`)
+      .send(equipment);
+
+    return response.body.equipment;
+  };
+
+  const rentalFactory = (
+    overrides?: Partial<{
+      equipmentId: string;
+      ownerId: string;
+      startAt: string;
+      endAt: string;
+    }>,
+  ) => ({
+    equipmentId: overrides?.equipmentId || equipment.id,
+    ownerId: overrides?.ownerId || owner.id,
+    startAt: overrides?.startAt || startAt,
+    endAt: overrides?.endAt || endAt,
+  });
+
+  const createRental = async (rental: ReturnType<typeof rentalFactory>) => {
+    const response = await request(app.server)
+      .post('/rentals')
+      .set('Authorization', `Bearer ${token}`)
+      .send(rental);
+
+    return response;
+  };
+
+  const reviewFactory = (
+    overrides?: Partial<{
+      rating: number;
+      comment: string;
+    }>,
+  ) => ({
+    rating: overrides?.rating || 5,
+    comment: overrides?.comment || 'Good',
+  });
+
+  const createReview = async (review: ReturnType<typeof reviewFactory>) => {
+    const response = await request(app.server)
+      .post(`/reviews/${rental.id}`)
+      .set('Authorization', `Bearer ${tokerOwner}`)
+      .send(review);
+
+    return response;
+  };
+
   let token: string;
   let tokerOwner: string;
   const startAt = new Date(new Date().getTime() + 1000 * 60 * 60 * 24);
   const endAt = new Date(new Date().getTime() + 1000 * 60 * 60 * 24 * 2);
 
-  let user: User;
   let equipment: Equipment;
   let owner: User;
   let rental: Rental;
-  // eslint-disable-next-line @typescript-eslint/no-explicit-any
-  let review: any;
 
   beforeAll(async () => {
     await app.ready();
@@ -26,63 +125,24 @@ describe('Review API Integration Tests', () => {
   });
 
   beforeEach(async () => {
-    review = {
-      rating: 5,
-      comment: 'Good',
-    };
+    token = (
+      await authenticateUser(
+        userFactory({ role: Role.ADMIN, email: 'admin@gmail.com' }),
+      )
+    ).token;
 
-    user = await prisma.user.create({
-      data: {
-        name: 'Pablo',
-        email: 'pabloTest@gmail.com',
-        password:
-          '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
-        role: Role.ADMIN,
-      },
-    });
+    const { token: ownerToken, user: ownerUser } = await authenticateUser(
+      userFactory({ role: Role.USER }),
+    );
+    tokerOwner = ownerToken;
+    owner = ownerUser;
 
-    owner = await prisma.user.create({
-      data: {
-        name: 'Owner',
-        email: 'owner@gmail.com',
-        password:
-          '$2a$08$G/99UQeyOAOix2dpDmNXjuCj2g5qhF5Iwa5DvC6g2xichVTAOE02e',
-        role: Role.USER,
-      },
-    });
+    equipment = await createEquipment(equipmentFactory({}));
 
-    const loginResponse = await request(app.server)
-      .post('/auth')
-      .send({ email: user.email, password: '123456' });
-
-    token = loginResponse.body.token;
-
-    const loginResponseOwner = await request(app.server)
-      .post('/auth')
-      .send({ email: owner.email, password: '123456' });
-
-    tokerOwner = loginResponseOwner.body.token;
-
-    equipment = await prisma.equipment.create({
-      data: {
-        name: 'Bike',
-        description: 'Bike',
-        dailyPrice: 10,
-        propertyId: user.id,
-        category: 'vehicle',
-      },
-    });
-
-    rental = await prisma.rental.create({
-      data: {
-        status: 'FINISHED',
-        startAt,
-        endAt,
-        equipmentId: equipment.id,
-        renterId: user.id,
-        ownerId: owner.id,
-        total: 20,
-      },
+    rental = (await createRental(rentalFactory())).body;
+    await prisma.rental.update({
+      where: { id: rental.id },
+      data: { status: 'FINISHED' },
     });
   });
 
@@ -97,29 +157,24 @@ describe('Review API Integration Tests', () => {
 
   // CREATE
   it('should be able to create a new review', async () => {
-    const response = await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+    const response = await createReview(reviewFactory());
 
     expect(response.status).toBe(201);
     expect(response.body.review).toHaveProperty('id');
   });
 
   it('should not be able to create a new review with invalid rating', async () => {
-    review.rating = 6;
-
-    const response = await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+    const response = await createReview(reviewFactory({ rating: 6 }));
 
     expect(response.status).toBe(400);
     expect(response.body.message).toEqual('Validation error');
   });
 
   it('should not be able to create a new review with invalid comment', async () => {
-    review.comment = 12;
+    const review = {
+      rating: 5,
+      comment: 12,
+    };
 
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
@@ -134,7 +189,7 @@ describe('Review API Integration Tests', () => {
     const response = await request(app.server)
       .post(`/reviews/100`)
       .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+      .send(reviewFactory());
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Validation error');
@@ -144,7 +199,7 @@ describe('Review API Integration Tests', () => {
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer 123`)
-      .send(review);
+      .send(reviewFactory());
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is invalid');
@@ -153,7 +208,7 @@ describe('Review API Integration Tests', () => {
   it('should not be able to create a new review without token', async () => {
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
-      .send(review);
+      .send(reviewFactory());
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is missing');
@@ -161,10 +216,7 @@ describe('Review API Integration Tests', () => {
 
   // INDEX BY EQUIPMENT
   it('should be able to list reviews by equipment', async () => {
-    await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+    await createReview(reviewFactory());
 
     const response = await request(app.server)
       .get(`/reviews/index/${equipment.id}`)
@@ -212,24 +264,18 @@ describe('Review API Integration Tests', () => {
 
   // INDEX BY USER
   it('should be able to list reviews by owner user', async () => {
-    await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+    await createReview(reviewFactory());
 
     const response = await request(app.server)
       .get(`/reviews/me`)
-      .set('Authorization', `Bearer ${token}`);
+      .set('Authorization', `Bearer ${tokerOwner}`);
 
     expect(response.status).toBe(200);
     expect(response.body.reviews).toHaveLength(1);
   });
 
   it('should be able to list reviews by renter user', async () => {
-    await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
+    await createReview(reviewFactory());
 
     const response = await request(app.server)
       .get(`/reviews/me`)
@@ -257,30 +303,20 @@ describe('Review API Integration Tests', () => {
 
   // DELETE
   it('should be able to delete a review with role admin', async () => {
-    const responseCreate = await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
-
-    const reviewId = responseCreate.body.review.id;
+    const review = (await createReview(reviewFactory())).body.review;
 
     const response = await request(app.server)
-      .delete(`/reviews/${reviewId}`)
+      .delete(`/reviews/${review.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(204);
   });
 
   it('should not be able to delete a review with role user', async () => {
-    const responseCreate = await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
-
-    const reviewId = responseCreate.body.review.id;
+    const review = (await createReview(reviewFactory())).body.review;
 
     const response = await request(app.server)
-      .delete(`/reviews/${reviewId}`)
+      .delete(`/reviews/${review.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`);
 
     expect(response.status).toBe(401);
@@ -322,26 +358,21 @@ describe('Review API Integration Tests', () => {
   });
 
   it('should not be able to delete a review with review already deleted', async () => {
-    const responseCreate = await request(app.server)
-      .post(`/reviews/${rental.id}`)
-      .set('Authorization', `Bearer ${tokerOwner}`)
-      .send(review);
-
-    const reviewId = responseCreate.body.review.id;
+    const review = (await createReview(reviewFactory())).body.review;
 
     await request(app.server)
-      .delete(`/reviews/${reviewId}`)
+      .delete(`/reviews/${review.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     const response = await request(app.server)
-      .delete(`/reviews/${reviewId}`)
+      .delete(`/reviews/${review.id}`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Review already deleted');
 
     const reviewDeleted = await prisma.review.findUnique({
-      where: { id: reviewId },
+      where: { id: review.id },
     });
 
     expect(reviewDeleted?.deleted).toBe(true);
