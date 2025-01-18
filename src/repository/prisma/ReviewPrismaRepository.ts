@@ -42,8 +42,6 @@ export class ReviewPrismaRepository implements ReviewRepository {
       where.reviewerId = data.reviewerId;
     }
 
-    console.log('where:', where);
-
     const reviews = await prisma.review.findMany({
       where,
       skip: (data.page - 1) * data.size,

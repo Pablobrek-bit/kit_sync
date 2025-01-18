@@ -60,8 +60,6 @@ export class EquipamentController {
   }
 
   async delete(request: FastifyRequest, reply: FastifyReply) {
-    console.log(request.params);
-
     const schemaParams = z
       .object({
         equipmentId: z.string({
@@ -72,8 +70,6 @@ export class EquipamentController {
       .strict();
 
     const { equipmentId } = schemaParams.parse(request.params);
-
-    console.log('id no controller: ', equipmentId);
 
     const userId = request.user.sub;
 
