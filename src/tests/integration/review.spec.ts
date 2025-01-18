@@ -3,7 +3,7 @@ import { app } from '../../app';
 import request from 'supertest';
 import { Role, type Equipment, type Rental, type User } from '@prisma/client';
 
-describe('User API Integration Tests', () => {
+describe('Review API Integration Tests', () => {
   let token: string;
   let tokerOwner: string;
   const startAt = new Date(new Date().getTime() + 1000 * 60 * 60 * 24);
@@ -13,6 +13,8 @@ describe('User API Integration Tests', () => {
   let equipment: Equipment;
   let owner: User;
   let rental: Rental;
+  // eslint-disable-next-line @typescript-eslint/no-explicit-any
+  let review: any;
 
   beforeAll(async () => {
     await app.ready();
@@ -24,6 +26,11 @@ describe('User API Integration Tests', () => {
   });
 
   beforeEach(async () => {
+    review = {
+      rating: 5,
+      comment: 'Good',
+    };
+
     user = await prisma.user.create({
       data: {
         name: 'Pablo',
@@ -90,11 +97,6 @@ describe('User API Integration Tests', () => {
 
   // CREATE
   it('should be able to create a new review', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -105,10 +107,7 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to create a new review with invalid rating', async () => {
-    const review = {
-      rating: 6,
-      comment: 'Good',
-    };
+    review.rating = 6;
 
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
@@ -120,10 +119,7 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to create a new review with invalid comment', async () => {
-    const review = {
-      rating: 5,
-      comment: 12,
-    };
+    review.comment = 12;
 
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
@@ -135,11 +131,6 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to create a new review with invalid rentalId', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const response = await request(app.server)
       .post(`/reviews/100`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -150,11 +141,6 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to create a new review with invalid token', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer 123`)
@@ -165,16 +151,9 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to create a new review without token', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const response = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .send(review);
-
-    console.log('response.body', response.body);
 
     expect(response.status).toBe(401);
     expect(response.body.message).toBe('Authorization header is missing');
@@ -182,11 +161,6 @@ describe('User API Integration Tests', () => {
 
   // INDEX BY EQUIPMENT
   it('should be able to list reviews by equipment', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -238,11 +212,6 @@ describe('User API Integration Tests', () => {
 
   // INDEX BY USER
   it('should be able to list reviews by owner user', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -257,11 +226,6 @@ describe('User API Integration Tests', () => {
   });
 
   it('should be able to list reviews by renter user', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -293,11 +257,6 @@ describe('User API Integration Tests', () => {
 
   // DELETE
   it('should be able to delete a review with role admin', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const responseCreate = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -313,11 +272,6 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to delete a review with role user', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const responseCreate = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
@@ -368,11 +322,6 @@ describe('User API Integration Tests', () => {
   });
 
   it('should not be able to delete a review with review already deleted', async () => {
-    const review = {
-      rating: 5,
-      comment: 'Good',
-    };
-
     const responseCreate = await request(app.server)
       .post(`/reviews/${rental.id}`)
       .set('Authorization', `Bearer ${tokerOwner}`)
