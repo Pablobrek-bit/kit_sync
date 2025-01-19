@@ -60,7 +60,7 @@ DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete. 
 
 - Messages (Renters and Owners):
 
-POST /messages: Send a new message (renter, owner).
+POST /messages: Send a new message (renter, owner). (tests)
 
 GET /messages/{rentalId}: Get messages for a specific rental (renter, owner).
 
