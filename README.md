@@ -64,7 +64,7 @@ POST /messages: Send a new message (renter, owner). (tests)
 
 GET /messages/{rentalId}: Get messages for a specific rental (renter, owner). (tests)
 
-GET /messages/me: Get messages sent and received by the current user (renter, owner).
+GET /messages/me: Get messages sent and received by the current user (renter, owner). (tests)
 
 - Availability (Owners and Admin):
 
