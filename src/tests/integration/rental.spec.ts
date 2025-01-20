@@ -124,9 +124,11 @@ describe('Rental API Integration Tests', () => {
   });
 
   afterEach(async () => {
-    await prisma.rental.deleteMany();
-    await prisma.user.deleteMany();
-    await prisma.equipment.deleteMany();
+    await prisma.$transaction([
+      prisma.rental.deleteMany(),
+      prisma.user.deleteMany(),
+      prisma.equipment.deleteMany(),
+    ]);
   });
 
   // CREATE
