@@ -8,4 +8,5 @@ export async function messageRoutes(app: FastifyInstance) {
   app.addHook('preHandler', ensureAuthenticated);
 
   app.post('/:receiverId', messageController.create);
+  app.get('/:rentalId', messageController.getByRental);
 }

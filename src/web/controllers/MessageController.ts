@@ -2,6 +2,7 @@ import type { FastifyReply, FastifyRequest } from 'fastify';
 import { MessagePrismaRepository } from 'repository/prisma/MessagePrismaRepository';
 import { RentalPrismaRepository } from 'repository/prisma/RentalPrismaRepository';
 import { CreateMessageService } from 'services/message/CreateMessageService';
+import { IndexMessageService } from 'services/message/IndexMessageService';
 import { z } from 'zod';
 
 export class MessageController {
@@ -43,5 +44,24 @@ export class MessageController {
     });
 
     reply.status(201).send(message);
+  }
+
+  async getByRental(request: FastifyRequest, reply: FastifyReply) {
+    const schema = z.object({
+      rentalId: z.string().uuid({ message: 'Rental ID must be a valid UUID' }),
+    });
+
+    const { rentalId } = schema.parse(request.params);
+
+    const messageRepository = new MessagePrismaRepository();
+    const rentalRepository = new RentalPrismaRepository();
+    const indexMessageService = new IndexMessageService(
+      messageRepository,
+      rentalRepository,
+    );
+
+    const { messages } = await indexMessageService.execute({ rentalId });
+
+    reply.send(messages);
   }
 }

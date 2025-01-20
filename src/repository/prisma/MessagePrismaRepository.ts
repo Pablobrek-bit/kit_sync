@@ -6,4 +6,15 @@ export class MessagePrismaRepository implements MessageRepository {
   async create(data: Prisma.MessageUncheckedCreateInput) {
     return prisma.message.create({ data });
   }
+
+  async index(data: { rentalId: string }) {
+    // eslint-disable-next-line @typescript-eslint/no-explicit-any
+    const where: any = {};
+
+    if (data.rentalId) {
+      where.rentalId = data.rentalId;
+    }
+
+    return prisma.message.findMany({ where });
+  }
 }
