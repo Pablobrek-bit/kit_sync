@@ -64,4 +64,19 @@ export class MessageController {
 
     reply.send(messages);
   }
+
+  async getMyMessages(request: FastifyRequest, reply: FastifyReply) {
+    const userId = request.user.sub;
+
+    const messageRepository = new MessagePrismaRepository();
+    const rentalRepository = new RentalPrismaRepository();
+    const indexMessageService = new IndexMessageService(
+      messageRepository,
+      rentalRepository,
+    );
+
+    const { messages } = await indexMessageService.execute({ userId });
+
+    reply.send(messages);
+  }
 }

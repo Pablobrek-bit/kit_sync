@@ -9,4 +9,5 @@ export async function messageRoutes(app: FastifyInstance) {
 
   app.post('/:receiverId', messageController.create);
   app.get('/:rentalId', messageController.getByRental);
+  app.get('/me', messageController.getMyMessages);
 }

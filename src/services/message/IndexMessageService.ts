@@ -4,7 +4,8 @@ import type { RentalRepository } from 'repository/interfaces/RentalRepository';
 import { InvalidArgumentError } from 'services/error/InvalidArgumentError';
 
 interface IndexMessageServiceRequest {
-  rentalId: string;
+  rentalId?: string;
+  userId?: string;
 }
 
 interface IndexMessageServiceResponse {
@@ -19,14 +20,21 @@ export class IndexMessageService {
 
   async execute({
     rentalId,
+    userId,
   }: IndexMessageServiceRequest): Promise<IndexMessageServiceResponse> {
-    const rental = await this.rentalRepository.findById(rentalId);
+    if (rentalId) {
+      const rental = await this.rentalRepository.findById(rentalId);
 
-    if (!rental) {
-      throw new InvalidArgumentError('Rental not found');
+      if (!rental) {
+        throw new InvalidArgumentError('Rental not found');
+      }
     }
 
-    const messages = await this.messageRepository.index({ rentalId });
+    const messages = await this.messageRepository.index({
+      rentalId,
+      receverId: userId,
+      senderId: userId,
+    });
 
     return { messages };
   }

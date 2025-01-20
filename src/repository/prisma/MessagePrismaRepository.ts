@@ -7,12 +7,24 @@ export class MessagePrismaRepository implements MessageRepository {
     return await prisma.message.create({ data });
   }
 
-  async index(data: { rentalId: string }) {
+  async index(data: {
+    rentalId?: string;
+    receverId?: string;
+    senderId?: string;
+  }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
     const where: any = {};
 
     if (data.rentalId) {
       where.rentalId = data.rentalId;
+    }
+
+    if (data.receverId) {
+      where.receverId = data.receverId;
+    }
+
+    if (data.senderId) {
+      where.senderId = data.senderId;
     }
 
     return await prisma.message.findMany({ where });
