@@ -4,7 +4,7 @@ import type { MessageRepository } from 'repository/interfaces/MessageRepository'
 
 export class MessagePrismaRepository implements MessageRepository {
   async create(data: Prisma.MessageUncheckedCreateInput) {
-    return prisma.message.create({ data });
+    return await prisma.message.create({ data });
   }
 
   async index(data: { rentalId: string }) {
@@ -15,6 +15,6 @@ export class MessagePrismaRepository implements MessageRepository {
       where.rentalId = data.rentalId;
     }
 
-    return prisma.message.findMany({ where });
+    return await prisma.message.findMany({ where });
   }
 }
