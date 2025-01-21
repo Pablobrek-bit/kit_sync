@@ -9,7 +9,7 @@ export class MessagePrismaRepository implements MessageRepository {
 
   async index(data: {
     rentalId?: string;
-    receverId?: string;
+    receiverId?: string;
     senderId?: string;
   }) {
     // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -19,8 +19,8 @@ export class MessagePrismaRepository implements MessageRepository {
       where.rentalId = data.rentalId;
     }
 
-    if (data.receverId) {
-      where.receverId = data.receverId;
+    if (data.receiverId) {
+      where.receverId = data.receiverId;
     }
 
     if (data.senderId) {

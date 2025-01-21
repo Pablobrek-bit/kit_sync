@@ -5,7 +5,7 @@ export interface MessageRepository {
 
   index(data: {
     rentalId?: string;
-    receverId?: string;
+    receiverId?: string;
     senderId?: string;
   }): Promise<Message[]>;
 }
