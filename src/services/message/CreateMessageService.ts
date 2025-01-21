@@ -36,22 +36,19 @@ export class CreateMessageService {
       throw new InvalidArgumentError('Rental is not active');
     }
 
-    if (rental.renterId !== senderId && rental.ownerId !== senderId) {
-      throw new InvalidArgumentError(
-        'User is not authorized to send a message',
-      );
-    }
-
-    if (rental.renterId !== receiverId && rental.ownerId !== receiverId) {
-      throw new InvalidArgumentError(
-        'User is not authorized to receive a message',
-      );
-    }
-
     if (receiverId === senderId) {
       throw new InvalidArgumentError(
         'Sender and receiver must be different users',
       );
+    }
+
+    if (rental.renterId !== senderId && rental.ownerId !== senderId) {
+      throw new InvalidArgumentError('Unauthorized sender');
+    } else if (
+      rental.renterId !== receiverId &&
+      rental.ownerId !== receiverId
+    ) {
+      throw new InvalidArgumentError('Unauthorized receiver');
     }
 
     const message = await this.messageRepository.create({
