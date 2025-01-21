@@ -13,7 +13,7 @@ describe('Create Equipment Service', () => {
   });
 
   it('should be able to create a new equipment', async () => {
-    const { equipament } = await createEquipmentService.execute({
+    const { equipment } = await createEquipmentService.execute({
       name: 'Furadeira',
       description: 'Furadeira de impacto',
       category: 'Ferramentas',
@@ -23,7 +23,7 @@ describe('Create Equipment Service', () => {
       propertyId: '4a95d2c8-7e33-4215-85f1-46bd6a3a407b',
     });
 
-    expect(equipament).toEqual(equipmentMock.mockEquipment);
+    expect(equipment).toEqual(equipmentMock.mockEquipment);
     expect(equipmentMock.equipamentRepositoryMock.create).toHaveBeenCalledTimes(
       1,
     );
