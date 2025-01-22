@@ -32,7 +32,7 @@ export class IndexMessageService {
 
     const messages = await this.messageRepository.index({
       rentalId,
-      receverId: userId,
+      receiverId: userId,
       senderId: userId,
     });
 
