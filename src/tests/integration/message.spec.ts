@@ -96,17 +96,17 @@ describe('Message API Integration Test', () => {
       text: string;
     }>,
   ) => ({
-    senderId: overrides?.senderId || rental.ownerId,
-    receiverId: overrides?.receiverId || rental.renterId,
+    senderId: overrides?.senderId || rental.renterId,
+    receiverId: overrides?.receiverId || rental.ownerId,
     rentalId: overrides?.rentalId || rental.id,
     text: overrides?.text || 'Message Test',
   });
 
   const createMessage = async (message: ReturnType<typeof messageFactory>) => {
     const response = await request(app.server)
-      .post('/messages')
+      .post(`/messages/${message.receiverId}`)
       .set('Authorization', `Bearer ${token}`)
-      .send(message);
+      .send({ rentalId: message.rentalId, text: message.text });
 
     return response;
   };
@@ -144,7 +144,7 @@ describe('Message API Integration Test', () => {
     rental = (await createRental(rentalFactory())).body;
     await prisma.rental.update({
       where: { id: rental.id },
-      data: { status: 'FINISHED' },
+      data: { status: 'ACCEPTED' },
     });
   });
 
@@ -166,4 +166,40 @@ describe('Message API Integration Test', () => {
     expect(response.body.message).toHaveProperty('id');
     expect(response.body.message.text).toBe('Message Test');
   });
+
+  it('should not be able to create a message with invalid receiver ID', async () => {
+    const response = await createMessage(
+      messageFactory({ receiverId: 'invalid-id' }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to create a message with invalid rental ID', async () => {
+    const response = await createMessage(
+      messageFactory({ rentalId: 'invalid-id' }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  // it('should not be able to create a message with empty text', async () => {
+  //   const response = await createMessage(messageFactory({ text: '' }));
+
+  //   expect(response.status).toBe(400);
+  //   expect(response.body.message).toBe('Validation Error');
+  // });
+
+  it('should not be able to create a message with text exceeding 255 characters', async () => {
+    const response = await createMessage(
+      messageFactory({ text: 'a'.repeat(256) }),
+    );
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  // INDEX BY RENTAL
 });
