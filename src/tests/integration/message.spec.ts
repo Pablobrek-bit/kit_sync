@@ -204,4 +204,34 @@ describe('Message API Integration Test', () => {
   });
 
   // INDEX BY RENTAL
+
+  it('should be able to get messages by rental ID', async () => {
+    await createMessage(messageFactory({}));
+
+    const response = await request(app.server)
+      .get(`/messages/${rental.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body).toBeInstanceOf(Array);
+    expect(response.body).toHaveLength(1);
+  });
+
+  it('should not be able to get messages by rental ID with invalid rental ID', async () => {
+    const response = await request(app.server)
+      .get('/messages/invalid-id')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
+
+  it('should not be able to get messages by rental ID if rental does not exist', async () => {
+    const response = await request(app.server)
+      .get(`/messages/${rental.id}`)
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Rental not found');
+  });
 });
