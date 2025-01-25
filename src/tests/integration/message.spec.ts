@@ -185,12 +185,14 @@ describe('Message API Integration Test', () => {
     expect(response.body.message).toBe('Validation error');
   });
 
-  // it('should not be able to create a message with empty text', async () => {
-  //   const response = await createMessage(messageFactory({ text: '' }));
+  it('should not be able to create a message with empty text', async () => {
+    const message = messageFactory();
+    message.text = '';
+    const response = await createMessage(message);
 
-  //   expect(response.status).toBe(400);
-  //   expect(response.body.message).toBe('Validation Error');
-  // });
+    expect(response.status).toBe(400);
+    expect(response.body.message).toBe('Validation error');
+  });
 
   it('should not be able to create a message with text exceeding 255 characters', async () => {
     const response = await createMessage(
