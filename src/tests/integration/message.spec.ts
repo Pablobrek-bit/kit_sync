@@ -228,10 +228,53 @@ describe('Message API Integration Test', () => {
 
   it('should not be able to get messages by rental ID if rental does not exist', async () => {
     const response = await request(app.server)
-      .get(`/messages/${rental.id}`)
+      .get(`/messages/6d55dde8-5d18-4ca6-8fab-3b187ab51746`)
       .set('Authorization', `Bearer ${token}`);
 
     expect(response.status).toBe(400);
     expect(response.body.message).toBe('Rental not found');
+  });
+
+  // INDEX MY MESSAGES
+  it('should be able to get my messages', async () => {
+    await createMessage(messageFactory({}));
+
+    const response = await request(app.server)
+      .get('/messages/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.messages).toBeInstanceOf(Array);
+    expect(response.body.messages).toHaveLength(1);
+  });
+
+  it('should not be able to get my messages without authentication', async () => {
+    const response = await request(app.server).get('/messages/me');
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is missing');
+  });
+
+  it('should not be able to get my messages if user does not exist', async () => {
+    const response = await request(app.server)
+      .get('/messages/me')
+      .set('Authorization', `Bearer invalid-token`);
+
+    expect(response.status).toBe(401);
+    expect(response.body.message).toBe('Authorization header is invalid');
+  });
+
+  it('should not be able to get my messages if user has no messages', async () => {
+    const { token } = await authenticateUser(
+      userFactory({ email: 'test1@gmai.com' }),
+    );
+
+    const response = await request(app.server)
+      .get('/messages/me')
+      .set('Authorization', `Bearer ${token}`);
+
+    expect(response.status).toBe(200);
+    expect(response.body.messages).toBeInstanceOf(Array);
+    expect(response.body.messages).toHaveLength(0);
   });
 });
