@@ -19,14 +19,14 @@ export class MessagePrismaRepository implements MessageRepository {
       where.rentalId = data.rentalId;
     }
 
-    if (data.receiverId) {
-      where.receverId = data.receiverId;
+    if (data.receiverId && data.senderId) {
+      where.OR = [{ receiverId: data.receiverId }, { senderId: data.senderId }];
     }
 
-    if (data.senderId) {
-      where.senderId = data.senderId;
-    }
+    const messages = await prisma.message.findMany({
+      where,
+    });
 
-    return await prisma.message.findMany({ where });
+    return messages;
   }
 }
