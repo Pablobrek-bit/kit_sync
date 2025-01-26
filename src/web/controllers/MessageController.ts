@@ -11,6 +11,7 @@ export class MessageController {
       .object({
         text: z
           .string({ invalid_type_error: 'Text must be a string' })
+          .trim()
           .min(1, { message: 'Text must not be empty' })
           .max(255, { message: 'Text must not exceed 255 characters' }),
         rentalId: z
@@ -19,11 +20,13 @@ export class MessageController {
       })
       .strict();
 
-    const paramsSchema = z.object({
-      receiverId: z
-        .string()
-        .uuid({ message: 'Receiver ID must be a valid UUID' }),
-    });
+    const paramsSchema = z
+      .object({
+        receiverId: z
+          .string()
+          .uuid({ message: 'Receiver ID must be a valid UUID' }),
+      })
+      .strict();
 
     const { text, rentalId } = schema.parse(request.body);
     const { receiverId } = paramsSchema.parse(request.params);
@@ -43,7 +46,7 @@ export class MessageController {
       text,
     });
 
-    reply.status(201).send(message);
+    reply.status(201).send({ message });
   }
 
   async getByRental(request: FastifyRequest, reply: FastifyReply) {
@@ -77,6 +80,6 @@ export class MessageController {
 
     const { messages } = await indexMessageService.execute({ userId });
 
-    reply.send(messages);
+    reply.send({ messages });
   }
 }
