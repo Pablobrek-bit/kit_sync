@@ -1,87 +1,32 @@
-- Authentication:
+# KitSync: Peer-to-Peer Audiovisual Equipment Rental Platform
 
-POST /auth/register: Register a new user.(x)
+KitSync is a robust and scalable platform designed to connect owners of audiovisual equipment with individuals and businesses seeking to rent that equipment. Built with a modern technology stack (Node.js, Fastify, Prisma, PostgreSQL), KitSync provides a seamless and secure marketplace for renting cameras, lenses, lighting, audio gear, and other production equipment.
 
-POST /auth/login: User login (returns JWT). (x)
+**Key Features:**
 
-GET /auth/me: Get current user's profile (protected route). (x)
+- **User Authentication and Authorization:** Secure user accounts with role-based access control (Admin, Owner, Renter) using JWT (JSON Web Tokens).
+- **Comprehensive Equipment Management:** Easily list equipment with detailed descriptions, specifications, multiple photos, availability calendars, and flexible pricing options.
+- **Powerful Search and Filtering:** Quickly find the perfect equipment based on keywords, categories, location, availability, price range, and other criteria.
+- **Streamlined Rental Requests and Management:** Send and manage rental requests with transparent communication channels between renters and owners.
+- **Secure Payments:** Integrated payment gateway (e.g., Stripe) for secure transactions and escrow functionality to protect both parties.
+- **Trusted Reviews and Ratings:** Build trust and accountability through a transparent review and rating system.
+- **Real-time Notifications:** Stay informed with instant notifications for rental requests, approvals, messages, and other important events.
+- **Future Development:** Mobile app support, advanced search filters, community features, and AI-powered recommendations are planned.
 
-PUT /auth/me: Update current user's profile (protected route). (x)
+**Technology Stack:**
 
-- Users (Admin Only):
+- **Backend:** Node.js, Fastify, Prisma ORM, PostgreSQL
+- **Authentication:** JWT (@fastify/jwt)
+- **API Documentation:** Swagger (OpenAPI)
 
-GET /users: Get all users (admin only). (x)
+**Getting Started:**
 
-GET /users/{userId}: Get a specific user by ID (admin only).
+1. Clone the repository: `git clone https://github.com/your-username/kitsync.git`
+2. Install dependencies: `npm install`
+3. Configure environment variables (see `.env.example`).
+4. Run database migrations: `npx prisma migrate dev`
+5. Start the development server: `npm run dev`
 
-DELETE /users/{userId}: Delete a user (admin only). Consider soft delete instead of hard delete. (x)
+**License:**
 
-- Equipment (Owners and Admin):
-
-POST /equipment: Create new equipment (owner, admin). (x)
-
-GET /equipment: Get all equipment (public, with filtering options). (x)
-
-GET /equipment/{equipmentId}: Get specific equipment by ID (public). (x)
-
-PUT /equipment/{equipmentId}: Update equipment (owner, admin). (x)
-
-DELETE /equipment/{equipmentId}: Delete equipment (owner, admin). Consider soft delete. (x)
-
-POST /equipment/{equipmentId}/photos: Upload photos for equipment (owner, admin). (x)
-
-DELETE /equipment/{equipmentId}/photos/{photoId}: Delete a photo from equipment (owner, admin). (x)
-
-GET /equipment/me: Get equipments owned by the current user (owner). (x)
-
-- Rentals (Renters, Owners, and Admin):
-
-POST /rentals: Create a new rental request (renter). (x)
-
-GET /rentals: Get all rentals (admin only, with filtering options). (x)
-
-GET /rentals/{rentalId}: Get a specific rental by ID (renter, owner, admin). (x)
-
-PUT /rentals/{rentalId}: Update rental status (owner, admin). Only allow status updates to valid transitions (e.g., PENDING -> ACCEPTED). (x)
-
-DELETE /rentals/{rentalId}: Delete/Cancel a rental request (renter, owner, admin – conditions apply depending on role and rental status). Consider soft delete. (x)
-
-GET /rentals/me: Get rentals related to the current user (renter or owner). Filter by role. (x)
-
-- Reviews (Renters, Owners, and Admin):
-
-POST /reviews: Create a new review (renter, owner – only after rental is complete). (x)
-
-GET /reviews/{equipmentId}: Get reviews for a specific equipment (public). (x)
-
-GET /reviews/me: Get reviews given or received by the current user (renter, owner). (x)
-
-DELETE /reviews/{reviewId}: Delete a review (admin only). Consider soft delete. (x)
-
-- Messages (Renters and Owners):
-
-POST /messages: Send a new message (renter, owner).
-
-GET /messages/{rentalId}: Get messages for a specific rental (renter, owner).
-
-GET /messages/me: Get messages sent and received by the current user (renter, owner).
-
-- Availability (Owners and Admin):
-
-GET /availability/{equipmentId}: Get availability for a specific equipment.
-
-POST /availability/{equipmentId}: Create new availability slots for equipment (owner, admin).
-
-PUT /availability/{availabilityId}: Update availability slot (owner, admin).
-
-DELETE /availability/{availabilityId}: Delete availability slot (owner, admin).
-
-- Authorization Notes:
-
-Protected Routes: Routes prefixed with /auth/me, /equipment/me, /rentals/me, and /reviews/me require authentication (valid JWT).
-
-Admin Routes: Routes like /users and deleting reviews require admin privileges.
-
-Owner Routes: Routes related to managing equipment and updating rental status (approving/rejecting) require owner privileges.
-
-Renter Routes: Routes for creating rental requests require renter privileges.
+This project is licensed under the [MIT License](LICENSE).
