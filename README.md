@@ -8,9 +8,7 @@ KitSync is a robust and scalable platform designed to connect owners of audiovis
 - **Comprehensive Equipment Management:** Easily list equipment with detailed descriptions, specifications, multiple photos, availability calendars, and flexible pricing options.
 - **Powerful Search and Filtering:** Quickly find the perfect equipment based on keywords, categories, location, availability, price range, and other criteria.
 - **Streamlined Rental Requests and Management:** Send and manage rental requests with transparent communication channels between renters and owners.
-- **Secure Payments:** Integrated payment gateway (e.g., Stripe) for secure transactions and escrow functionality to protect both parties.
 - **Trusted Reviews and Ratings:** Build trust and accountability through a transparent review and rating system.
-- **Real-time Notifications:** Stay informed with instant notifications for rental requests, approvals, messages, and other important events.
 - **Future Development:** Mobile app support, advanced search filters, community features, and AI-powered recommendations are planned.
 
 **Technology Stack:**
@@ -21,7 +19,7 @@ KitSync is a robust and scalable platform designed to connect owners of audiovis
 
 **Getting Started:**
 
-1. Clone the repository: `git clone https://github.com/your-username/kitsync.git`
+1. Clone the repository: `git clone https://github.com/Pablobrek-bit/kit_sync`
 2. Install dependencies: `npm install`
 3. Configure environment variables (see `.env.example`).
 4. Run database migrations: `npx prisma migrate dev`
